@@ -1,0 +1,2 @@
+# VideoClassificationWithAttention
+Video Classification utilizing various attention-mechanisms
