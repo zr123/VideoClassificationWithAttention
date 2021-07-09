@@ -6,10 +6,10 @@ dependencies:
   - python
   - notebook
   - jupyter_contrib_nbextensions
-  - numpy==1.18.5
+  - numpy=1.19.*
   - pandas
   - matplotlib
   - opencv
   - pydot
   - scikit-learn
-  - tensorflow==2.5.*
+  - tensorflow=2.3.*

@@ -102,7 +102,7 @@ class Models:
         model.add(
             TimeDistributed(InceptionResNetV2(
                 input_shape=input_shape[1:4],
-                include_top=False))
+                include_top=False)))
         # Make transferlearning basemodel weights nontrainable
         model.layers[0].trainable = False
         model.add(TimeDistributed(GlobalAveragePooling2D()))

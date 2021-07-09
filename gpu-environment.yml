@@ -3,16 +3,16 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - python
+  - python=3.8.*
   - notebook
   - jupyter_contrib_nbextensions
-  - numpy==1.18.5
+  - numpy
   - pandas
   - matplotlib
   - opencv
   - pydot
   - scikit-learn
-  - cudatoolkit=11.2 # requires cuDNN 8.1
+  - cudatoolkit=10.1 # requires cuDNN 7.6
   - pip
   - pip:
-    - tensorflow-gpu==2.5.0
+    - tensorflow-gpu==2.3.0
