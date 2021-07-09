@@ -1,0 +1,15 @@
+name: attention-tf2-cpu
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python
+  - notebook
+  - jupyter_contrib_nbextensions
+  - numpy==1.18.5
+  - pandas
+  - matplotlib
+  - opencv
+  - pydot
+  - scikit-learn
+  - tensorflow==2.5.*

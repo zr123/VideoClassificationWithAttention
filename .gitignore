@@ -128,9 +128,14 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
+# pycharm
+.idea/
+
 # tensorboard log-files
 */logs/
 
-# dataset
+# datasets
+*.rar
+hmdb51/
 train/
 test/
