@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 
-def evaluate_dataset(path="D:\datasets\hmdb51_org"):
+def evaluate_dataset(path="D:\datasets\hmdb51_org", shuffle=False):
     df = pd.DataFrame()
     for path, directories, files in os.walk(path):
         for f in files:
@@ -14,6 +14,8 @@ def evaluate_dataset(path="D:\datasets\hmdb51_org"):
                 "filename": f,
                 "category": path.split("\\")[-1]},
                 ignore_index=True)
+    if shuffle:
+        df = df.sample(frac=1)
     return df
 
 
@@ -53,10 +55,11 @@ def get_formatted_video(path, resize_shape=None, grayscale=False, downsampling_f
     video = load_video(path)
     if resize_shape is not None:
         video = resize_video(video, resize_shape)
-    if grayscale:
-        video = grayscale_video(video)
     if downsampling_frames is not None:
         video = downsample_video(video, downsampling_frames)
+    if grayscale:
+        video = grayscale_video(video)
+        video = video.reshape((40, 128, 128, 1))
     if normalize:
         video = video / 255.0
         video = np.float32(video)
@@ -97,3 +100,16 @@ def convert_dataset(dataframe, target_directory,
         os.makedirs(target_directory + str(row.category) + "/", exist_ok=True)
         vid = get_formatted_video(row.path, resize_shape, grayscale, downsampling_frames, normalize)
         save_video(vid, target_directory + str(row.category) + "/" + row.filename)
+
+
+def create_batch(X_paths, y, grayscale=True, batch_size=16):
+    for i in range(0, len(X_paths), batch_size):
+        X_batch = []
+        y_batch = []
+        for b in range(i, i+batch_size):
+            if b == len(X_paths):
+                break
+            X_batch.append(get_formatted_video(X_paths[b], grayscale=grayscale, normalize=True))
+            y_batch.append(y[b])
+
+        yield np.array(X_batch), np.vstack(y_batch)

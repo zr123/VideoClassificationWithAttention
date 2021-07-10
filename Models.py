@@ -17,7 +17,7 @@ class Models:
 
     @staticmethod
     def create_2DCNN_MLP(input_shape=(FRAMES, HEIGHT, WIDTH, CHANNELS), num_classes=CLASSES):
-        model = Sequential()
+        model = Sequential(name="2DCNN_MLP")
         model.add(Input(input_shape))
         # 2D conv layers with time distribution
         model.add(TimeDistributed(Conv2D(32, kernel_size=(3, 3), activation="relu")))
@@ -45,7 +45,7 @@ class Models:
 
     @staticmethod
     def create_3DCNN(input_shape=(FRAMES, HEIGHT, WIDTH, CHANNELS), num_classes=CLASSES):
-        model = Sequential()
+        model = Sequential(name="3DCNN")
         model.add(Input(input_shape))
         # 3D conv layers
         model.add(Conv3D(32, 3, activation="relu"))
@@ -68,7 +68,7 @@ class Models:
 
     @staticmethod
     def create_LSTM(input_shape=(FRAMES, HEIGHT, WIDTH, CHANNELS), num_classes=CLASSES):
-        model = Sequential()
+        model = Sequential(name="LSTM")
         model.add(Input(input_shape))
         # 2D conv Layers with time distribution
         model.add(TimeDistributed(Conv2D(32, kernel_size=(3, 3), activation="relu")))
@@ -83,7 +83,7 @@ class Models:
         model.add(TimeDistributed(MaxPooling2D(pool_size=(2, 2))))
         model.add(TimeDistributed(Flatten()))
         # LSTM
-        model.add(LSTM(128))
+        model.add(LSTM(1024))
         # dense layers
         model.add(Dense(64, activation="relu"))
         model.add(Dense(64, activation="relu"))
@@ -97,7 +97,7 @@ class Models:
 
     @staticmethod
     def create_Transfer_LSTM(input_shape=(FRAMES, HEIGHT, WIDTH, CHANNELS), num_classes=CLASSES):
-        model = Sequential()
+        model = Sequential(name="TransferLSTM")
         model.add(Input(input_shape))
         model.add(
             TimeDistributed(InceptionResNetV2(
