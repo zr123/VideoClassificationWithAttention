@@ -132,13 +132,12 @@ dmypy.json
 .idea/
 
 # tensorboard log-files
-*/logs/
+*logs/
 
 # datasets
 *.rar
 hmdb51/
-train/
-test/
+dataset/
 
 # models
 models/

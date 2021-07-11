@@ -5,17 +5,18 @@ import numpy as np
 import pandas as pd
 
 
-def evaluate_dataset(path="D:\datasets\hmdb51_org", shuffle=False):
+def evaluate_dataset(path="D:\datasets\hmdb51_org", shuffle=False, random_state=42):
     df = pd.DataFrame()
     for path, directories, files in os.walk(path):
         for f in files:
+            path = path.replace("/", "\\")
             df = df.append({
                 "path": path + "\\" + f,
                 "filename": f,
                 "category": path.split("\\")[-1]},
                 ignore_index=True)
     if shuffle:
-        df = df.sample(frac=1)
+        df = df.sample(frac=1, random_state=random_state)
     return df
 
 
@@ -59,24 +60,11 @@ def get_formatted_video(path, resize_shape=None, grayscale=False, downsampling_f
         video = downsample_video(video, downsampling_frames)
     if grayscale:
         video = grayscale_video(video)
-        video = video.reshape((40, 128, 128, 1))
+        video = video.reshape(video.shape[0:3] + (1,))
     if normalize:
         video = video / 255.0
         video = np.float32(video)
     return video
-
-
-def create_batch(X_paths, y, batch_size=16, grayscale=True):
-    for i in range(0, len(X_paths), batch_size):
-        X_batch = []
-        y_batch = []
-        for b in range(i, i + batch_size):
-            if b == len(X_paths):
-                break
-            X_batch.append(get_formatted_video(X_paths[b], grayscale=grayscale))
-            y_batch.append(y[b])
-
-        yield (np.array(X_batch), np.vstack(y_batch))
 
 
 def save_video(videoarray, filename):
@@ -94,22 +82,31 @@ def save_video(videoarray, filename):
 def convert_dataset(dataframe, target_directory,
                     resize_shape=(128, 128),  # (width, height,)
                     grayscale=False,
-                    normalize=False,
-                    downsampling_frames=40):
+                    downsampling_frames=40,
+                    normalize=False):
     for _, row in dataframe.iterrows():
         os.makedirs(target_directory + str(row.category) + "/", exist_ok=True)
         vid = get_formatted_video(row.path, resize_shape, grayscale, downsampling_frames, normalize)
         save_video(vid, target_directory + str(row.category) + "/" + row.filename)
 
 
-def create_batch(X_paths, y, grayscale=True, batch_size=16):
+def create_batch(
+        X_paths,
+        y,
+        batch_size=16,
+        resize_shape=None,
+        grayscale=False,
+        downsampling_frames=None,
+        normalize=True):
+    if isinstance(X_paths, pd.core.series.Series):
+        X_paths = X_paths.tolist()
     for i in range(0, len(X_paths), batch_size):
         X_batch = []
         y_batch = []
         for b in range(i, i+batch_size):
             if b == len(X_paths):
                 break
-            X_batch.append(get_formatted_video(X_paths[b], grayscale=grayscale, normalize=True))
+            X_batch.append(get_formatted_video(X_paths[b], resize_shape, grayscale, downsampling_frames, normalize))
             y_batch.append(y[b])
 
         yield np.array(X_batch), np.vstack(y_batch)
