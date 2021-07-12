@@ -3,6 +3,7 @@ import os.path
 import cv2
 import numpy as np
 import pandas as pd
+import tensorflow as tf
 
 
 def evaluate_dataset(path="D:\datasets\hmdb51_org", shuffle=False, random_state=42):
@@ -16,7 +17,7 @@ def evaluate_dataset(path="D:\datasets\hmdb51_org", shuffle=False, random_state=
                 "category": path.split("\\")[-1]},
                 ignore_index=True)
     if shuffle:
-        df = df.sample(frac=1, random_state=random_state)
+        df = df.sample(frac=1, random_state=random_state).reset_index(drop=True)
     return df
 
 
@@ -52,7 +53,7 @@ def grayscale_video(video):
     return np.array(grayscaled_video)
 
 
-def get_formatted_video(path, resize_shape=None, grayscale=False, downsampling_frames=None, normalize=False):
+def get_formatted_video(path, resize_shape=None, grayscale=False, downsampling_frames=None, proprocessing=None):
     video = load_video(path)
     if resize_shape is not None:
         video = resize_video(video, resize_shape)
@@ -61,9 +62,14 @@ def get_formatted_video(path, resize_shape=None, grayscale=False, downsampling_f
     if grayscale:
         video = grayscale_video(video)
         video = video.reshape(video.shape[0:3] + (1,))
-    if normalize:
-        video = video / 255.0
-        video = np.float32(video)
+    if proprocessing is not None:
+        if proprocessing == "normalize":
+            video = video / 255.0
+            video = np.float32(video)
+        elif proprocessing == "InceptionResNetV2":
+            video = tf.keras.applications.inception_resnet_v2.preprocess_input(video)
+        else:
+            raise Exception("Unexpected argument for preprocessing")
     return video
 
 
