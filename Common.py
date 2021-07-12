@@ -94,25 +94,3 @@ def convert_dataset(dataframe, target_directory,
         os.makedirs(target_directory + str(row.category) + "/", exist_ok=True)
         vid = get_formatted_video(row.path, resize_shape, grayscale, downsampling_frames, normalize)
         save_video(vid, target_directory + str(row.category) + "/" + row.filename)
-
-
-def create_batch(
-        X_paths,
-        y,
-        batch_size=16,
-        resize_shape=None,
-        grayscale=False,
-        downsampling_frames=None,
-        normalize=True):
-    if isinstance(X_paths, pd.core.series.Series):
-        X_paths = X_paths.tolist()
-    for i in range(0, len(X_paths), batch_size):
-        X_batch = []
-        y_batch = []
-        for b in range(i, i+batch_size):
-            if b == len(X_paths):
-                break
-            X_batch.append(get_formatted_video(X_paths[b], resize_shape, grayscale, downsampling_frames, normalize))
-            y_batch.append(y[b])
-
-        yield np.array(X_batch), np.vstack(y_batch)
