@@ -1,8 +1,8 @@
 import tensorflow as tf
 from tensorflow.python.keras import Input
 from tensorflow.python.keras.layers import TimeDistributed, Conv2D, MaxPooling2D, Flatten, Dense, Conv3D, MaxPooling3D, \
-    LSTM, GlobalAveragePooling2D, BatchNormalization, Activation, Dropout
-from tensorflow.python.keras.models import Sequential
+    LSTM, GlobalAveragePooling2D, BatchNormalization, Dropout, Average
+from tensorflow.python.keras.models import Sequential, Model
 from tensorflow.keras.applications import InceptionResNetV2
 
 # downscaled defaults for hmdb51
@@ -136,6 +136,64 @@ def lstm_test(input_shape=(FRAMES, HEIGHT, WIDTH, CHANNELS), num_classes=CLASSES
     model.add(Dense(512, activation='relu'))
     model.add(Dropout(0.5))
     model.add(Dense(num_classes, activation='softmax'))
+    model.compile(
+        optimizer='adam',
+        loss="categorical_crossentropy",
+        metrics=[tf.keras.metrics.Accuracy(), tf.keras.metrics.TopKCategoricalAccuracy(5)])
+    return model
+
+
+# typical input_shape=(None, 224, 224, 3)
+def create_TwoStreamModel(input_shape=(FRAMES, HEIGHT, WIDTH, CHANNELS), num_classes=CLASSES):
+    # Spatial Stream ConvNet
+    spatial_stream_input = Input(input_shape)
+    spatial_stream = TimeDistributed(Sequential([
+        Conv2D(96, 7, 2, activation="relu", name="spatial_conv1"),
+        MaxPooling2D(3, 2),
+        BatchNormalization(),
+        Conv2D(256, 5, 2, activation="relu", name="spatial_conv2"),
+        MaxPooling2D(3, 2),
+        BatchNormalization(),
+        Conv2D(512, 3, 1, activation="relu", name="spatial_conv3"),
+        Conv2D(512, 3, 1, activation="relu", name="spatial_conv4"),
+        Conv2D(512, 3, 1, activation="relu", name="spatial_conv5"),
+        MaxPooling2D(3, 2),
+        Flatten(),
+        Dense(4096, activation="relu", name="spatial_full6"),
+        Dropout(0.5),
+        Dense(2048, activation="relu", name="spatial_full7"),
+        Dropout(0.5),
+        Dense(num_classes, activation="softmax", name="spatial_softmax")
+    ]))
+    spatial_stream = spatial_stream(spatial_stream_input)
+
+    # Temporal Stream ConvNet
+    temporal_stream_input = Input(input_shape)
+    temporal_stream = TimeDistributed(Sequential([
+        Conv2D(96, 7, 2, activation="relu", name="temporal_conv1"),
+        MaxPooling2D(3, 2),
+        BatchNormalization(),
+        Conv2D(256, 5, 2, activation="relu", name="temporal_conv2"),
+        MaxPooling2D(3, 2),
+        BatchNormalization(),
+        Conv2D(512, 3, 1, activation="relu", name="temporal_conv3"),
+        Conv2D(512, 3, 1, activation="relu", name="temporal_conv4"),
+        Conv2D(512, 3, 1, activation="relu", name="temporal_conv5"),
+        MaxPooling2D(3, 2),
+        Flatten(),
+        Dense(4096, activation="relu", name="temporal_full6"),
+        Dropout(0.5),
+        Dense(2048, activation="relu", name="temporal_full7"),
+        Dropout(0.5),
+        Dense(num_classes, activation="softmax", name="temporal_softmax")
+    ]))
+    temporal_stream = temporal_stream(temporal_stream_input)
+
+    # late fusion
+    fusion = Average()([spatial_stream, temporal_stream])
+    fusion = tf.math.reduce_mean(fusion, axis=1)
+
+    model = Model(inputs=[spatial_stream_input, temporal_stream_input], outputs=fusion)
     model.compile(
         optimizer='adam',
         loss="categorical_crossentropy",
