@@ -96,3 +96,26 @@ def convert_dataset(dataframe, target_directory,
         os.makedirs(target_directory + str(row.category) + "/", exist_ok=True)
         vid = get_formatted_video(row.path, resize_shape, grayscale, downsampling_frames, normalize)
         save_video(vid, target_directory + str(row.category) + "/" + row.filename)
+
+
+# simple dense optflow vector with horizontal and vertical component
+def calcOpticalFlow(frame1, frame2):
+    assert (frame1.shape == frame2.shape), "Frames must have the same shape."
+    # grayscale if necessary
+    if frame1.shape[2] == 3:
+        frame1 = cv2.cvtColor(frame1, cv2.COLOR_BGR2GRAY)
+        frame2 = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
+    flow = cv2.calcOpticalFlowFarneback(frame1, frame2, None, 0.5, 3, 15, 3, 5, 1.2, 0)
+    return flow
+
+
+def calcOpticalFlowTrajectory(frame1, frame2):
+    flow = calcOpticalFlow(frame1, frame2)
+    # turn two-directional vector into 3-channel trajectory
+    hsv = np.zeros(frame1.shape[0:2] + (3,), dtype=np.uint8)
+    hsv[..., 1] = 255
+    mag, ang = cv2.cartToPolar(flow[..., 0], flow[..., 1])
+    hsv[..., 0] = ang * 180 / np.pi / 2
+    hsv[..., 2] = cv2.normalize(mag, None, 0, 255, cv2.NORM_MINMAX)
+    bgr = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+    return bgr
