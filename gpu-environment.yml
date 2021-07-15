@@ -6,12 +6,13 @@ dependencies:
   - python=3.8.*
   - notebook
   - jupyter_contrib_nbextensions
-  - numpy
+  - numpy=1.19.*
   - pandas
   - matplotlib
   - opencv
   - pydot
   - scikit-learn
+  - pytest
   - cudatoolkit=10.1 # requires cuDNN 7.6
   - pip
   - pip:

@@ -147,7 +147,7 @@ def lstm_test(input_shape=(FRAMES, HEIGHT, WIDTH, CHANNELS), num_classes=CLASSES
 def create_TwoStreamModel(input_shape=(FRAMES, HEIGHT, WIDTH, CHANNELS), num_classes=CLASSES):
     # Spatial Stream ConvNet
     spatial_stream_input = Input(input_shape)
-    spatial_stream = TimeDistributed(Sequential([
+    spatial_stream = Sequential([
         Conv2D(96, 7, 2, activation="relu", name="spatial_conv1"),
         MaxPooling2D(3, 2),
         BatchNormalization(),
@@ -164,12 +164,12 @@ def create_TwoStreamModel(input_shape=(FRAMES, HEIGHT, WIDTH, CHANNELS), num_cla
         Dense(2048, activation="relu", name="spatial_full7"),
         Dropout(0.5),
         Dense(num_classes, activation="softmax", name="spatial_softmax")
-    ]))
-    spatial_stream = spatial_stream(spatial_stream_input)
+    ])
+    spatial_stream = TimeDistributed(spatial_stream)(spatial_stream_input)
 
     # Temporal Stream ConvNet
     temporal_stream_input = Input(input_shape)
-    temporal_stream = TimeDistributed(Sequential([
+    temporal_stream = Sequential([
         Conv2D(96, 7, 2, activation="relu", name="temporal_conv1"),
         MaxPooling2D(3, 2),
         BatchNormalization(),
@@ -186,8 +186,8 @@ def create_TwoStreamModel(input_shape=(FRAMES, HEIGHT, WIDTH, CHANNELS), num_cla
         Dense(2048, activation="relu", name="temporal_full7"),
         Dropout(0.5),
         Dense(num_classes, activation="softmax", name="temporal_softmax")
-    ]))
-    temporal_stream = temporal_stream(temporal_stream_input)
+    ])
+    temporal_stream = TimeDistributed(temporal_stream)(temporal_stream_input)
 
     # late fusion
     fusion = Average()([spatial_stream, temporal_stream])
