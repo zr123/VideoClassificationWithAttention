@@ -25,6 +25,8 @@ def load_video(path):
     cap = cv2.VideoCapture(path)
     video = []
     retval, image = cap.read()
+    if not retval:
+        raise Exception("Invalid path: " + path)
     while retval:
         video.append(image)
         retval, image = cap.read()
