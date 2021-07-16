@@ -109,13 +109,14 @@ def calcOpticalFlow(frame1, frame2):
     return flow
 
 
-def calcOpticalFlowTrajectory(frame1, frame2):
-    flow = calcOpticalFlow(frame1, frame2)
-    # turn two-directional vector into 3-channel trajectory
-    hsv = np.zeros(frame1.shape[0:2] + (3,), dtype=np.uint8)
-    hsv[..., 1] = 255
-    mag, ang = cv2.cartToPolar(flow[..., 0], flow[..., 1])
-    hsv[..., 0] = ang * 180 / np.pi / 2
-    hsv[..., 2] = cv2.normalize(mag, None, 0, 255, cv2.NORM_MINMAX)
-    bgr = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
-    return bgr
+def calcStackedOpticalFlow(video, stack_size_L=10):
+    stack = []
+    for i in range(len(video)):
+        frame = []
+        for l in range(i+1, i+1+stack_size_L):
+            if l >= len(video):
+                frame.append(np.zeros((video.shape[1:3]) + (2,), dtype=np.float32))
+            else:
+                frame.append(calcOpticalFlow(video[i], video[l]))
+        stack.append(np.dstack(frame))
+    return np.array(stack)
