@@ -5,15 +5,16 @@ from tensorflow.keras.layers import Dense, Softmax, Flatten
 
 
 class AttentionModule(keras.layers.Layer):
-    #
-    def __init__(self):#, units=32, input_dim=32):
+    """Attention module from LEARN TO PAY ATTENTION by Jetley et al.
+
+      Arguments:
+        compatibility_func: A string,
+          one of `weighted` (default) or `dot`.
+
+    """
+    def __init__(self, compatibility_func="weighted"):
         super(AttentionModule, self).__init__()
-        #u_init = tf.random_normal_initializer()
-        # alternative: tf.zeros_initializer()
-        #self.u = tf.Variable(
-        #    initial_value=u_init(shape=(input_dim, units), dtype="float32"),
-        #    trainable=True,
-        #)
+        self.compatibility_func = compatibility_func
 
     def call(self, inputs, **kwargs):
         local_features, global_features = inputs
@@ -21,19 +22,36 @@ class AttentionModule(keras.layers.Layer):
         # dimensionality mapping g to l
         global_feature_mapping = self.mapping_layer(global_features)
 
-        # calculate compability scores
-        compability_scores = self.compability_function(local_features, global_feature_mapping)
+        # calculate compatibility scores
+        compatibility_scores = self.compatibility_function(local_features, global_feature_mapping)
 
         # calculate attention
-        attention = Softmax()(compability_scores)
-        attention = Flatten()(attention)
-
+        compatibility_scores = Flatten()(compatibility_scores)
+        attention = Softmax()(compatibility_scores)
         return attention
 
     def build(self, input_shape):
         local_feature_shape, global_feature_shape = input_shape
+        # mapping layer, to make sure global feature shape and local feature shape is the same
         self.mapping_layer = Dense(local_feature_shape[-1])
+        if self.compatibility_func == "weighted":
+            self.u = self.add_weight(shape=(local_feature_shape[-1],), initializer="random_normal", trainable=True)
+
+    def compatibility_function(self, local_features, global_features):
+        if self.compatibility_func == "weighted":
+            return self.weighted_compatibility_function(local_features, global_features)
+        elif self.compatibility_func == "dot":
+            return self.simple_dot_compatibility_function(local_features, global_features)
+        else:
+            raise Exception("Unexpected compatibility function: " + self.compability_func)
 
     # simple dot
-    def compability_function(self, local_features, global_features):
+    def simple_dot_compatibility_function(self, local_features, global_features):
         return K.batch_dot(local_features, global_features)
+
+    # weighted dot product
+    def weighted_compatibility_function(self, local_features, global_features):
+        # expand global_feateurs from (batch_size, n) to (batch_size, 1, 1, n)
+        # so the addition is broadcast across all spatial features ("pseudo-pixels")
+        expanded_g = tf.expand_dims(tf.expand_dims(global_features, axis=1), axis=1)
+        return tf.tensordot(local_features + expanded_g, self.u, axes=1)
