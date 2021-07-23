@@ -9,7 +9,7 @@ from tensorflow.keras.applications import InceptionResNetV2
 HEIGHT = 128
 WIDTH = 128
 FRAMES = 40
-CHANNELS = 1
+CHANNELS = 3
 CLASSES = 51
 
 
