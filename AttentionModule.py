@@ -35,7 +35,6 @@ class AttentionModule(keras.layers.Layer):
         local_feature_shape, global_feature_shape = input_shape
         # mapping layer, to make sure global feature shape and local feature shape is the same
         self.shape = local_feature_shape[1:-1]
-        print(self.shape)
         self.mapping_layer = Dense(local_feature_shape[-1])
         if self.compatibility_func == "weighted":
             self.u = self.add_weight(name='u', shape=(local_feature_shape[-1],), initializer="random_normal", trainable=True)
