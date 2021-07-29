@@ -36,11 +36,18 @@ def create_L2PA_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), num_classes=CL
     ])
     model_output = tf.keras.layers.Dense(1024, activation="relu")(model_output)
     model_output = Dropout(0.5)(model_output)
-    model_output = tf.keras.layers.Dense(10, activation="softmax")(model_output)
+    model_output = tf.keras.layers.Dense(num_classes, activation="softmax")(model_output)
 
     train_model = Model(inputs=input_layer, outputs=model_output)
     train_model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
 
-    attention_extractor_model = Model(inputs=input_layer, outputs=[model_output, attention1, attention2, attention3])
+    return train_model
 
-    return train_model, attention_extractor_model
+# get the helper-model to extract the attention information
+def get_attention_extractor(model):
+    attention = []
+    for layer in model.layers:
+        if "AttentionModule" in str(type(layer)):
+            attention.append(layer.output)
+    attention_extractor_model = Model(inputs=model.input, outputs=[model.output] + attention)
+    return attention_extractor_model
