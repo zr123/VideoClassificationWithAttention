@@ -6,6 +6,7 @@ dependencies:
   - python
   - notebook
   - jupyter_contrib_nbextensions
+  - ipywidgets
   - numpy=1.19.*
   - pandas
   - matplotlib
@@ -14,3 +15,4 @@ dependencies:
   - scikit-learn
   - pytest
   - tensorflow=2.3.*
+  - tensorflow-datasets

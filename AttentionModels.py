@@ -1,7 +1,8 @@
 import tensorflow as tf
-from tensorflow.python.keras.layers import Dropout, Flatten
+from tensorflow.python.keras.layers import Dense, Dropout, Flatten
 
 from AttentionModule import AttentionModule
+from AttentionGate import AttentionGate
 from tensorflow.python.keras.models import Model
 
 HEIGHT = 128
@@ -49,5 +50,46 @@ def get_attention_extractor(model):
     for layer in model.layers:
         if "AttentionModule" in str(type(layer)):
             attention.append(layer.output)
+        if "AttentionGate" in str(type(layer)):
+            attention.append(layer.output)
     attention_extractor_model = Model(inputs=model.input, outputs=[model.output] + attention)
     return attention_extractor_model
+
+
+def create_AttentionGated_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), num_classes=CLASSES):
+    basenet = tf.keras.applications.ResNet50V2(classes=10, weights=None)
+
+    input_layer = basenet.input
+
+    for layer in basenet.layers:
+        if layer.name == "conv2_block3_out":
+            local1 = layer
+        if layer.name == "conv3_block4_out":
+            local2 = layer
+        if layer.name == "conv4_block6_out":
+            local3 = layer
+
+    global_features = basenet.layers[-2]
+
+    a1 = AttentionGate(32)([local1.output, global_features.output])
+    a2 = AttentionGate(32)([local2.output, global_features.output])
+    a3 = AttentionGate(32)([local3.output, global_features.output])
+
+    a1 = tf.keras.layers.GlobalAveragePooling2D()(a1)
+    a1 = Dense(1024, activation="relu")(a1)
+    a1 = Dense(10, activation="softmax")(a1)
+
+    a2 = tf.keras.layers.GlobalAveragePooling2D()(a2)
+    a2 = Dense(1024, activation="relu")(a2)
+    a2 = Dense(10, activation="softmax")(a2)
+
+    a3 = tf.keras.layers.GlobalAveragePooling2D()(a3)
+    a3 = Dense(1024, activation="relu")(a3)
+    a3 = Dense(10, activation="softmax")(a3)
+
+    final = (a1 + a2 + a3 + basenet.output) / 4.0
+
+    model = tf.keras.models.Model(inputs=input_layer, outputs=final)
+    model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
+
+    return model

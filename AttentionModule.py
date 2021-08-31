@@ -14,6 +14,7 @@ class AttentionModule(keras.layers.Layer):
     """
     def __init__(self, compatibility_func="weighted"):
         super(AttentionModule, self).__init__()
+        assert compatibility_func in ["weighted", "dot"], "Unexpected compatibility_func argument."
         self.compatibility_func = compatibility_func
 
     def call(self, inputs, **kwargs):
