@@ -24,6 +24,8 @@ class AttentionGate(keras.layers.Layer):
             attention = sigmoid(compatibility, axis=-1)
         if self.attention_function == "pseudo-softmax":
             attention = self.pseudo_softmax(compatibility)
+
+        attention = tf.math.reduce_mean(attention, axis=-1, keepdims=True)
         return attention
 
     # pseudo-softmax: subtract by min value and divide by sum -> less sparse but similar properties as softmax
@@ -31,7 +33,7 @@ class AttentionGate(keras.layers.Layer):
         shape = compatibility.shape
         attention = Flatten()(compatibility)
         a_min = tf.math.reduce_min(attention, axis=-1, keepdims=True)
-        a_sum = tf.math.reduce_sum(attention, axis=-1, keepdims=True)
+        a_sum = tf.math.reduce_sum(attention - a_min, axis=-1, keepdims=True)
         attention = (attention - a_min) / a_sum
         attention = Reshape(shape[1:])(attention)
         return attention

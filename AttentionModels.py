@@ -71,23 +71,27 @@ def create_AttentionGated_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), num_
 
     global_features = basenet.layers[-2]
 
-    a1 = AttentionGate(32)([local1.output, global_features.output])
-    a2 = AttentionGate(32)([local2.output, global_features.output])
-    a3 = AttentionGate(32)([local3.output, global_features.output])
+    a1 = AttentionGate(64)([local1.output, global_features.output])
+    a2 = AttentionGate(64)([local2.output, global_features.output])
+    a3 = AttentionGate(64)([local3.output, global_features.output])
 
-    a1 = tf.keras.layers.GlobalAveragePooling2D()(a1)
-    a1 = Dense(1024, activation="relu")(a1)
-    a1 = Dense(10, activation="softmax")(a1)
 
-    a2 = tf.keras.layers.GlobalAveragePooling2D()(a2)
-    a2 = Dense(1024, activation="relu")(a2)
-    a2 = Dense(10, activation="softmax")(a2)
+    attended_features1 = local1.output * a1
+    attended_features1 = tf.keras.layers.GlobalAveragePooling2D()(attended_features1)
+    attended_features1 = Dense(2048, activation="relu")(attended_features1)
+    attended_features1 = Dense(10, activation="softmax")(attended_features1)
 
-    a3 = tf.keras.layers.GlobalAveragePooling2D()(a3)
-    a3 = Dense(1024, activation="relu")(a3)
-    a3 = Dense(10, activation="softmax")(a3)
+    attended_features2 = local2.output * a2
+    attended_features2 = tf.keras.layers.GlobalAveragePooling2D()(attended_features2)
+    attended_features2 = Dense(2048, activation="relu")(attended_features2)
+    attended_features2 = Dense(10, activation="softmax")(attended_features2)
 
-    final = (a1 + a2 + a3 + basenet.output) / 4.0
+    attended_features3 = local3.output * a3
+    attended_features3 = tf.keras.layers.GlobalAveragePooling2D()(attended_features3)
+    attended_features3 = Dense(2048, activation="relu")(attended_features3)
+    attended_features3 = Dense(10, activation="softmax")(attended_features3)
+
+    final = (attended_features1 + attended_features2 + attended_features3 + basenet.output) / 4.0
 
     model = tf.keras.models.Model(inputs=input_layer, outputs=final)
     model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
