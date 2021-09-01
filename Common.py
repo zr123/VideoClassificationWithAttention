@@ -4,6 +4,7 @@ import cv2
 import numpy as np
 import pandas as pd
 import tensorflow as tf
+import matplotlib.pyplot as plt
 
 
 def evaluate_dataset(path="D:\datasets\hmdb51_org", shuffle=False, random_state=42):
@@ -113,10 +114,51 @@ def calcStackedOpticalFlow(video, stack_size_L=10):
     stack = []
     for i in range(len(video)):
         frame = []
-        for l in range(i+1, i+1+stack_size_L):
+        for l in range(i + 1, i + 1 + stack_size_L):
             if l >= len(video):
                 frame.append(np.zeros((video.shape[1:3]) + (2,), dtype=np.float32))
             else:
                 frame.append(calcOpticalFlow(video[i], video[l]))
         stack.append(np.dstack(frame))
     return np.array(stack)
+
+
+# combine multiple attention maps to a single overlay of fixed size
+def combine_attention(attention, size=(224, 224)):
+    combined_attention = cv2.resize(attention[0], dsize=size)
+    for i in range(1, len(attention)):
+        combined_attention += cv2.resize(attention[i], dsize=size)
+    combined_attention /= len(attention)
+    return combined_attention
+
+
+# display an image along with it's attention maps
+def display_attention_maps(image, attention, rescale_image=True, cmap="inferno"):
+    attention_count = len(attention)
+    fig, ax = plt.subplots(1, attention_count + 1, figsize=(20, 20))
+    # the source-image range will often be [-1, 1] and needs to be [0, 1] for display
+    if rescale_image:
+        ax[0].imshow(image / 2 + 0.5)
+    else:
+        ax[0].imshow(image)
+    for i in range(attention_count):
+        ax[i + 1].imshow(attention[i], cmap=plt.get_cmap(cmap))
+    plt.show()
+
+
+# combine image and overlay to a single image
+def overlay_attention(image, overlay, rescale_image=True, cmap='inferno'):
+    if rescale_image:
+        image = image/2 + 0.5
+    # rescale to [0, 1]
+    overlay = (overlay - overlay.min()) / (overlay.max() - overlay.min())
+    # grayscale to rgba heatmap
+    colormap = plt.get_cmap(cmap)
+    heatmap = colormap(overlay)
+    # slice the alpha channel: rgba -> rgb
+    heatmap = heatmap[:, :, :3]
+    # from float64 to float 32
+    heatmap = heatmap.astype("float32")
+
+    combined_image = cv2.addWeighted(image, 0.3, heatmap, 0.7, 0)
+    return combined_image
