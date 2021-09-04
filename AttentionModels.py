@@ -84,17 +84,17 @@ def create_AttentionGated_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), num_
     attended_features1 = local1.output * a1
     attended_features1 = tf.keras.layers.GlobalAveragePooling2D()(attended_features1)
     attended_features1 = Dense(2048, activation="relu")(attended_features1)
-    attended_features1 = Dense(10, activation="softmax")(attended_features1)
+    attended_features1 = Dense(num_classes, activation="softmax")(attended_features1)
 
     attended_features2 = local2.output * a2
     attended_features2 = tf.keras.layers.GlobalAveragePooling2D()(attended_features2)
     attended_features2 = Dense(2048, activation="relu")(attended_features2)
-    attended_features2 = Dense(10, activation="softmax")(attended_features2)
+    attended_features2 = Dense(num_classes, activation="softmax")(attended_features2)
 
     attended_features3 = local3.output * a3
     attended_features3 = tf.keras.layers.GlobalAveragePooling2D()(attended_features3)
     attended_features3 = Dense(2048, activation="relu")(attended_features3)
-    attended_features3 = Dense(10, activation="softmax")(attended_features3)
+    attended_features3 = Dense(num_classes, activation="softmax")(attended_features3)
 
     final = (attended_features1 + attended_features2 + attended_features3 + basenet.output) / 4.0
 
@@ -125,17 +125,17 @@ def create_AttentionGatedGrid_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), 
     attended_features1 = local1.output * a1
     attended_features1 = tf.keras.layers.GlobalAveragePooling2D()(attended_features1)
     attended_features1 = Dense(2048, activation="relu")(attended_features1)
-    attended_features1 = Dense(10, activation="softmax")(attended_features1)
+    attended_features1 = Dense(num_classes, activation="softmax")(attended_features1)
 
     attended_features2 = local2.output * a2
     attended_features2 = tf.keras.layers.GlobalAveragePooling2D()(attended_features2)
     attended_features2 = Dense(2048, activation="relu")(attended_features2)
-    attended_features2 = Dense(10, activation="softmax")(attended_features2)
+    attended_features2 = Dense(num_classes, activation="softmax")(attended_features2)
 
     attended_features3 = local3.output * a3
     attended_features3 = tf.keras.layers.GlobalAveragePooling2D()(attended_features3)
     attended_features3 = Dense(2048, activation="relu")(attended_features3)
-    attended_features3 = Dense(10, activation="softmax")(attended_features3)
+    attended_features3 = Dense(num_classes, activation="softmax")(attended_features3)
 
     final = (attended_features1 + attended_features2 + attended_features3 + basenet.output) / 4.0
 
