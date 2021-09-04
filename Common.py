@@ -151,7 +151,7 @@ def overlay_attention(image, overlay, rescale_image=True, cmap='inferno'):
     if rescale_image:
         image = image/2 + 0.5
     # rescale to [0, 1]
-    overlay = (overlay - overlay.min()) / (overlay.max() - overlay.min())
+    overlay = overlay / overlay.max()
     # grayscale to rgba heatmap
     colormap = plt.get_cmap(cmap)
     heatmap = colormap(overlay)

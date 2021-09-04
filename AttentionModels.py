@@ -4,6 +4,8 @@ from tensorflow.python.keras.layers import Dense, Dropout, Flatten
 from AttentionModule import AttentionModule
 from AttentionGate import AttentionGate
 from tensorflow.python.keras.models import Model
+import ResidualAttentionModule
+from tensorflow.python.keras.applications import resnet
 
 HEIGHT = 128
 WIDTH = 128
@@ -52,6 +54,9 @@ def get_attention_extractor(model):
             attention.append(layer.output)
         if "AttentionGate" in str(type(layer)):
             attention.append(layer.output)
+        if "_ResidualAttention" in layer.name:
+            attention.append(tf.math.reduce_mean(layer.output, axis=-1))
+
     attention_extractor_model = Model(inputs=model.input, outputs=[model.output] + attention)
     return attention_extractor_model
 
@@ -138,3 +143,33 @@ def create_AttentionGatedGrid_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), 
     model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
 
     return model
+
+
+def create_ResidualAttention_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), num_classes=CLASSES):
+    def stack(x, filters, blocks, shortcuts, stride1=2, name=None):
+        x = resnet.block2(x, filters, conv_shortcut=True, name=name + '_block1')
+        for i in range(2, blocks):
+            x = resnet.block2(x, filters, name=name + '_block' + str(i))
+        # residual attention module inserted here
+        x = ResidualAttentionModule.create_residual_attention_module(x, filters, shortcuts=shortcuts, name=name + "_attn")
+        x = resnet.block2(x, filters, stride=stride1, name=name + '_block' + str(blocks))
+        return x
+
+    def stack_fn(x):
+        x = stack(x, 64, 3, shortcuts=2, name='conv2')
+        x = stack(x, 128, 4, shortcuts=1, name='conv3')
+        x = stack(x, 256, 6, shortcuts=0, name='conv4')
+        return resnet.stack2(x, 512, 3, stride1=1, name='conv5')
+
+    return resnet.ResNet(
+        stack_fn,
+        True,
+        True,
+        'attention_resnet50v2',
+        include_top=True,
+        weights=None,
+        input_tensor=None,
+        input_shape=input_shape,
+        pooling=None,
+        classes=num_classes,
+        classifier_activation="softmax")

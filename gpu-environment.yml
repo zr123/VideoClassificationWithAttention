@@ -14,6 +14,8 @@ dependencies:
   - pydot
   - scikit-learn
   - pytest
+  - lime
+  - scikit-image
   - cudatoolkit=10.1 # requires cuDNN 7.6
   - pip
   - pip:

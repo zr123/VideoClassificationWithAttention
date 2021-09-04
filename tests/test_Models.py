@@ -1,11 +1,11 @@
 import sys
-# setting path
+
+# set path
 sys.path.append('../VideoClassificationWithAttention')
 
 import Models
 import AttentionModels
 import tensorflow as tf
-
 
 
 def test_create_2DCNN_MLP():
