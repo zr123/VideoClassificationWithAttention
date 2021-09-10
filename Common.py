@@ -125,6 +125,11 @@ def calcStackedOpticalFlow(video, stack_size_L=10):
 
 # combine multiple attention maps to a single overlay of fixed size
 def combine_attention(attention, size=(224, 224)):
+    # convert tf.Tensor to numpy, so cv2 can work with it
+    for i in range(0, len(attention)):
+        if isinstance(attention[i], tf.Tensor):
+            attention[i] = attention[i].numpy()
+
     combined_attention = cv2.resize(attention[0], dsize=size)
     for i in range(1, len(attention)):
         combined_attention += cv2.resize(attention[i], dsize=size)

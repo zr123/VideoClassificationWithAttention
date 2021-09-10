@@ -2,6 +2,7 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras.layers import ReLU, Conv1D, Dense, Flatten, Reshape
 from tensorflow.keras.activations import softmax, sigmoid
+import AttentionCommon
 
 
 class AttentionGate(keras.layers.Layer):
@@ -18,24 +19,15 @@ class AttentionGate(keras.layers.Layer):
         compatibility = self.compatibility_function(local_features, global_features)
 
         if self.attention_function == "softmax":
-            attention = softmax(compatibility, axis=-1)
+            attention = AttentionCommon.softmax2d(compatibility, name=None) # softmax(compatibility, axis=-1)
         if self.attention_function == "sigmoid":
-            attention = sigmoid(compatibility, axis=-1)
+            attention = AttentionCommon.sigmoid2d(compatibility, name=None) # sigmoid(compatibility, axis=-1)
         if self.attention_function == "pseudo-softmax":
-            attention = self.pseudo_softmax(compatibility)
+            attention = AttentionCommon.pseudo_softmax2d(compatibility, name=None) # self.pseudo_softmax(compatibility)
 
         attention = tf.math.reduce_mean(attention, axis=-1, keepdims=True)
         return attention
 
-    # pseudo-softmax: subtract by min value and divide by sum -> less sparse but similar properties as softmax
-    def pseudo_softmax(self, compatibility):
-        shape = compatibility.shape
-        attention = Flatten()(compatibility)
-        a_min = tf.math.reduce_min(attention, axis=-1, keepdims=True)
-        a_sum = tf.math.reduce_sum(attention - a_min, axis=-1, keepdims=True)
-        attention = (attention - a_min) / a_sum
-        attention = Reshape(shape[1:])(attention)
-        return attention
 
     def build(self, input_shape):
         local_feature_shape, global_feature_shape = input_shape

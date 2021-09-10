@@ -4,6 +4,7 @@ import tensorflow.keras.backend as K
 from tensorflow.keras.layers import MaxPooling2D, UpSampling2D, Conv2D, Activation
 from tensorflow.keras.activations import sigmoid
 from tensorflow.python.keras.applications import resnet
+import AttentionCommon
 
 
 
@@ -60,7 +61,8 @@ def create_mask_branch(x, filters, r, residual_block_fn, shortcuts, name=None):
     x = Conv2D(filters * 4, 1)(x)
 
     # name the activation layer so the attention can easily be found and extracted
-    x = Activation(sigmoid, name=name + "_ResidualAttention")(x)
+    x = AttentionCommon.sigmoid2d(x, name=name + "_ResidualAttention")
+    #x = Activation(sigmoid, name=name + "_ResidualAttention")(x)
 
     return x
 
