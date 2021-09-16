@@ -6,6 +6,7 @@ from AttentionGate import AttentionGate
 from tensorflow.python.keras.models import Model
 import ResidualAttentionModule
 from tensorflow.python.keras.applications import resnet
+import CBAM
 
 HEIGHT = 128
 WIDTH = 128
@@ -159,6 +160,39 @@ def create_ResidualAttention_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), n
         x = ResidualAttention_stack(x, 64, 3, shortcuts=2, name='conv2')
         x = ResidualAttention_stack(x, 128, 4, shortcuts=1, name='conv3')
         x = ResidualAttention_stack(x, 256, 6, shortcuts=0, name='conv4')
+        return resnet.stack2(x, 512, 3, stride1=1, name='conv5')
+
+    return resnet.ResNet(
+        stack_fn,
+        True,
+        True,
+        'attention_resnet50v2',
+        include_top=True,
+        weights=None,
+        input_tensor=None,
+        input_shape=input_shape,
+        pooling=None,
+        classes=num_classes,
+        classifier_activation="softmax")
+
+
+def create_CBAM_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), num_classes=CLASSES):
+    def CBAM_stack(x, filters, blocks, shortcuts, stride1=2, name=None):
+        x = resnet.block2(x, filters, conv_shortcut=True, name=name + '_block1')
+        for i in range(2, blocks):
+            x = resnet.block2(x, filters, name=name + '_block' + str(i))
+
+        # CBAM module inserted here
+        f_dashdash = CBAM.create_residual_attention_module(x)
+        x = x + f_dashdash
+
+        x = resnet.block2(x, filters, stride=stride1, name=name + '_block' + str(blocks))
+        return x
+
+    def stack_fn(x):
+        x = CBAM_stack(x, 64, 3, shortcuts=2, name='conv2')
+        x = CBAM_stack(x, 128, 4, shortcuts=1, name='conv3')
+        x = CBAM_stack(x, 256, 6, shortcuts=0, name='conv4')
         return resnet.stack2(x, 512, 3, stride1=1, name='conv5')
 
     return resnet.ResNet(

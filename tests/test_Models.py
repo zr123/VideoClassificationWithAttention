@@ -75,3 +75,9 @@ def test_create_AttentionGatedGrid_ResNet50v2(classes):
 def test_create_ResidualAttention_ResNet50v2(classes):
     model = AttentionModels.create_ResidualAttention_ResNet50v2((224, 224, 3), num_classes=classes)
     tf.debugging.assert_shapes([(model.output, (None, classes))])
+
+
+@pytest.mark.parametrize("classes", [10, 100, 1000])
+def test_create_CBAM_ResNet50v2(classes):
+    model = AttentionModels.create_CBAM_ResNet50v2((224, 224, 3), num_classes=classes)
+    tf.debugging.assert_shapes([(model.output, (None, classes))])
