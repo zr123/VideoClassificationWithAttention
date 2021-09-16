@@ -4,16 +4,17 @@ from tensorflow.keras import activations
 from tensorflow.keras.models import Sequential
 
 
-def create_residual_attention_module(x, r=1.0):
+def create_residual_attention_module(x, r=16.0, k=7):
     """CBAM: Convolutional Block Attention Module by Woo et al.
 
         Arguments:
             x: input tensor
-            r: reduction ratio of the hidden layer in the channel attention module
+            r: reduction ratio of the hidden layer in the channel attention block
+            k: kernel-size of the Conv2D layer in the spatial attention block
     """
     channels = x.shape[3]
     f_dash = create_channel_attention_block(x, r, channels)
-    f_dashdash = create_spatial_attention_block(f_dash)
+    f_dashdash = create_spatial_attention_block(f_dash, k)
     return f_dashdash
 
 
@@ -30,9 +31,9 @@ def create_channel_attention_block(x, r, channel_count):
     return x * channel_attention
 
 
-def create_spatial_attention_block(x):
+def create_spatial_attention_block(x, k):
     f_s_avg = tf.math.reduce_mean(x, axis=-1, keepdims=True)  # "channel-wise avg-pooling"
     f_s_max = tf.math.reduce_max(x, axis=-1, keepdims=True)  # "channel-wise max-pooling"
     combined_spatial_features = layers.Concatenate()([f_s_avg, f_s_max])
-    spatial_attention = layers.Conv2D(1, 7, padding="same", activation="sigmoid")(combined_spatial_features)
+    spatial_attention = layers.Conv2D(1, k, padding="same", activation="sigmoid")(combined_spatial_features)
     return x * spatial_attention
