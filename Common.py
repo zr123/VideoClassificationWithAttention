@@ -109,16 +109,13 @@ def calcOpticalFlow(frame1, frame2):
     flow = cv2.calcOpticalFlowFarneback(frame1, frame2, None, 0.5, 3, 15, 3, 5, 1.2, 0)
     return flow
 
-
+# TODO: wie haben die das in dem Paper gemacht?
 def calcStackedOpticalFlow(video, stack_size_L=10):
     stack = []
-    for i in range(len(video)):
+    for i in range(len(video) - stack_size_L):
         frame = []
         for l in range(i + 1, i + 1 + stack_size_L):
-            if l >= len(video):
-                frame.append(np.zeros((video.shape[1:3]) + (2,), dtype=np.float32))
-            else:
-                frame.append(calcOpticalFlow(video[i], video[l]))
+            frame.append(calcOpticalFlow(video[i], video[l]))
         stack.append(np.dstack(frame))
     return np.array(stack)
 

@@ -144,7 +144,8 @@ def lstm_test(input_shape=(FRAMES, HEIGHT, WIDTH, CHANNELS), num_classes=CLASSES
 
 
 # typical input_shape=(None, 224, 224, 3)
-def create_TwoStreamModel(input_shape=(FRAMES, HEIGHT, WIDTH, CHANNELS), num_classes=CLASSES):
+# typical input_shape=(None, 224, 224, 20)
+def create_TwoStreamModel(input_shape=(FRAMES, HEIGHT, WIDTH, CHANNELS), optflow_shape=(FRAMES, HEIGHT, WIDTH, CHANNELS), num_classes=CLASSES):
     # Spatial Stream ConvNet
     spatial_stream_input = Input(input_shape)
     spatial_stream = Sequential([
@@ -168,7 +169,7 @@ def create_TwoStreamModel(input_shape=(FRAMES, HEIGHT, WIDTH, CHANNELS), num_cla
     spatial_stream = TimeDistributed(spatial_stream)(spatial_stream_input)
 
     # Temporal Stream ConvNet
-    temporal_stream_input = Input(input_shape)
+    temporal_stream_input = Input(optflow_shape)
     temporal_stream = Sequential([
         Conv2D(96, 7, 2, activation="relu", name="temporal_conv1"),
         MaxPooling2D(3, 2),

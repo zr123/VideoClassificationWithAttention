@@ -63,6 +63,6 @@ class AttentionModule(keras.layers.Layer):
     # weighted dot product
     def weighted_compatibility_function(self, local_features, global_features):
         # expand global_feateurs from (batch_size, n) to (batch_size, 1, 1, n)
-        # so the addition is broadcast across all spatial features ("pseudo-pixels")
+        # so the addition is broadcast across all spatial features
         expanded_g = tf.expand_dims(tf.expand_dims(global_features, axis=1), axis=1)
         return tf.tensordot(local_features + expanded_g, self.u, axes=1)

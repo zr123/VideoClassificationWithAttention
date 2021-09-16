@@ -3,14 +3,6 @@ from tensorflow.keras.layers import Flatten, Reshape
 from tensorflow.keras.activations import sigmoid, softmax
 
 
-def sigmoid2d(x, name):
-    shape = x.shape
-    x = Flatten()(x)
-    x = sigmoid(x)
-    x = Reshape(shape[1:], name=name)(x)
-    return x
-
-
 def softmax2d(x, name):
     shape = x.shape
     x = Flatten()(x)

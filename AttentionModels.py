@@ -146,19 +146,19 @@ def create_AttentionGatedGrid_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), 
 
 
 def create_ResidualAttention_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), num_classes=CLASSES):
-    def stack(x, filters, blocks, shortcuts, stride1=2, name=None):
+    def ResidualAttention_stack(x, filters, blocks, shortcuts, stride1=2, name=None):
         x = resnet.block2(x, filters, conv_shortcut=True, name=name + '_block1')
         for i in range(2, blocks):
             x = resnet.block2(x, filters, name=name + '_block' + str(i))
         # residual attention module inserted here
-        x = ResidualAttentionModule.create_residual_attention_module(x, filters, shortcuts=shortcuts, name=name + "_attn")
+        x = ResidualAttentionModule.create_residual_attention_module(x, filters, shortcuts=shortcuts, name=name + "_attn", attention_function="pseudo-softmax")
         x = resnet.block2(x, filters, stride=stride1, name=name + '_block' + str(blocks))
         return x
 
     def stack_fn(x):
-        x = stack(x, 64, 3, shortcuts=2, name='conv2')
-        x = stack(x, 128, 4, shortcuts=1, name='conv3')
-        x = stack(x, 256, 6, shortcuts=0, name='conv4')
+        x = ResidualAttention_stack(x, 64, 3, shortcuts=2, name='conv2')
+        x = ResidualAttention_stack(x, 128, 4, shortcuts=1, name='conv3')
+        x = ResidualAttention_stack(x, 256, 6, shortcuts=0, name='conv4')
         return resnet.stack2(x, 512, 3, stride1=1, name='conv5')
 
     return resnet.ResNet(

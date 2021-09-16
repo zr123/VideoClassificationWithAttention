@@ -7,8 +7,8 @@ from tensorflow.python.keras.applications import resnet
 import AttentionCommon
 
 
-
-def create_residual_attention_module(x, filters, p=1, t=2, r=1, residual_block_fn=resnet.block2, shortcuts=0, name=None):
+def create_residual_attention_module(x, filters, p=1, t=2, r=1, residual_block_fn=resnet.block2, shortcuts=0,
+                                     name=None, attention_function="sigmoid"):
     """Residual attention module from Residual Attention Network for Image Classification by Wang et al.
 
         Arguments:
@@ -21,6 +21,8 @@ def create_residual_attention_module(x, filters, p=1, t=2, r=1, residual_block_f
             shortcuts: number of inner shortcuts in the mask branch
             name: name of the block
     """
+    assert attention_function in ["softmax", "sigmoid", "pseudo-softmax"], "Unexpected attention_function argument."
+
     # p: pre-processing
     for i in range(p):
         x = residual_block_fn(x, filters, name=name + "_preblock" + str(i))
@@ -32,7 +34,7 @@ def create_residual_attention_module(x, filters, p=1, t=2, r=1, residual_block_f
 
     # mask branch
     mask = x
-    mask = create_mask_branch(mask, filters, r, residual_block_fn, shortcuts, name=name)
+    mask = create_mask_branch(mask, filters, r, residual_block_fn, shortcuts, name, attention_function)
 
     # fusion
     x = (trunk * mask) + trunk
@@ -44,7 +46,7 @@ def create_residual_attention_module(x, filters, p=1, t=2, r=1, residual_block_f
     return x
 
 
-def create_mask_branch(x, filters, r, residual_block_fn, shortcuts, name=None):
+def create_mask_branch(x, filters, r, residual_block_fn, shortcuts, name, attention_function):
     # pre-block
     x = MaxPooling2D()(x)
     for i in range(r):
@@ -61,13 +63,20 @@ def create_mask_branch(x, filters, r, residual_block_fn, shortcuts, name=None):
     x = Conv2D(filters * 4, 1)(x)
 
     # name the activation layer so the attention can easily be found and extracted
-    x = AttentionCommon.sigmoid2d(x, name=name + "_ResidualAttention")
-    #x = Activation(sigmoid, name=name + "_ResidualAttention")(x)
+    # x = AttentionCommon.sigmoid2d(x, name=name + "_ResidualAttention")
+    x = AttentionCommon.pseudo_softmax2d(x, name=name + "_ResidualAttention")
+
+    if attention_function == "softmax":
+        x = AttentionCommon.softmax2d(x, name=name + "_ResidualAttention")
+    if attention_function == "sigmoid":
+        x = Activation(sigmoid, name=name + "_ResidualAttention")(x)
+    if attention_function == "pseudo-softmax":
+        x = AttentionCommon.pseudo_softmax2d(x, name=name + "_ResidualAttention")
 
     return x
 
 
-def create_mask_branch_inner_shortcuts(x, filters, r, residual_block_fn, shortcuts, name=None):
+def create_mask_branch_inner_shortcuts(x, filters, r, residual_block_fn, shortcuts, name):
     """ Creates the nested inner parts of the mask branch.
     """
     if shortcuts == 0:
@@ -79,7 +88,7 @@ def create_mask_branch_inner_shortcuts(x, filters, r, residual_block_fn, shortcu
     for i in range(r):
         x = residual_block_fn(x, filters, name=name + "_mask_inner" + str(shortcuts) + "_preblock" + str(i))
 
-    x = create_mask_branch_inner_shortcuts(x, filters, r, residual_block_fn, shortcuts-1, name)
+    x = create_mask_branch_inner_shortcuts(x, filters, r, residual_block_fn, shortcuts - 1, name)
 
     for i in range(r):
         x = residual_block_fn(x, filters, name=name + "_mask_inner" + str(shortcuts) + "_postblock" + str(i))

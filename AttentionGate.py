@@ -19,11 +19,11 @@ class AttentionGate(keras.layers.Layer):
         compatibility = self.compatibility_function(local_features, global_features)
 
         if self.attention_function == "softmax":
-            attention = AttentionCommon.softmax2d(compatibility, name=None) # softmax(compatibility, axis=-1)
+            attention = AttentionCommon.softmax2d(compatibility, name=None)
         if self.attention_function == "sigmoid":
-            attention = AttentionCommon.sigmoid2d(compatibility, name=None) # sigmoid(compatibility, axis=-1)
+            attention = sigmoid(compatibility)
         if self.attention_function == "pseudo-softmax":
-            attention = AttentionCommon.pseudo_softmax2d(compatibility, name=None) # self.pseudo_softmax(compatibility)
+            attention = AttentionCommon.pseudo_softmax2d(compatibility, name=None)
 
         attention = tf.math.reduce_mean(attention, axis=-1, keepdims=True)
         return attention
