@@ -44,7 +44,7 @@ def resize_video(video, resize_shape):
 
 def downsample_video(video, downsampling_frames):
     framecount = video.shape[0]
-    sampled_frames = np.arange(0, framecount, framecount / downsampling_frames)
+    sampled_frames = np.arange(0, framecount - 1/downsampling_frames, framecount / downsampling_frames)
     downsampled_video = [video[int(f)] for f in sampled_frames]
     return np.array(downsampled_video)
 

@@ -118,8 +118,6 @@ def create_Transfer_LSTM(input_shape=(FRAMES, HEIGHT, WIDTH, CHANNELS), num_clas
 
 
 def lstm_test(input_shape=(FRAMES, HEIGHT, WIDTH, CHANNELS), num_classes=CLASSES):
-    """Build a simple LSTM network. We pass the extracted features from
-    our CNN to this model predomenently."""
     model = Sequential(name="TrailTransferLSTM")
     model.add(Input(input_shape))
     model.add(
