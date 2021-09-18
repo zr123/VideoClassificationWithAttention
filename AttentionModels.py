@@ -1,6 +1,6 @@
 import tensorflow as tf
 from tensorflow.python.keras.layers import Dense, Dropout, Flatten
-
+from tensorflow.python.keras import layers
 from AttentionModule import AttentionModule
 from AttentionGate import AttentionGate
 from tensorflow.python.keras.models import Model
@@ -82,22 +82,22 @@ def create_AttentionGated_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), clas
     a3 = AttentionGate(64)([local3.output, global_features.output])
 
 
-    attended_features1 = local1.output * a1
+    attended_features1 = layers.Multiply()([local1.output, a1])
     attended_features1 = tf.keras.layers.GlobalAveragePooling2D()(attended_features1)
     attended_features1 = Dense(2048, activation="relu")(attended_features1)
     attended_features1 = Dense(classes, activation="softmax")(attended_features1)
 
-    attended_features2 = local2.output * a2
+    attended_features2 = layers.Multiply()([local2.output, a2])
     attended_features2 = tf.keras.layers.GlobalAveragePooling2D()(attended_features2)
     attended_features2 = Dense(2048, activation="relu")(attended_features2)
     attended_features2 = Dense(classes, activation="softmax")(attended_features2)
 
-    attended_features3 = local3.output * a3
+    attended_features3 = layers.Multiply()([local3.output, a3])
     attended_features3 = tf.keras.layers.GlobalAveragePooling2D()(attended_features3)
     attended_features3 = Dense(2048, activation="relu")(attended_features3)
     attended_features3 = Dense(classes, activation="softmax")(attended_features3)
 
-    final = (attended_features1 + attended_features2 + attended_features3 + basenet.output) / 4.0
+    final = layers.Average()([attended_features1, attended_features2, attended_features3, basenet.output])
 
     model = tf.keras.models.Model(inputs=input_layer, outputs=final)
     model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
@@ -123,22 +123,22 @@ def create_AttentionGatedGrid_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), 
     a2 = AttentionGate(64, grid_attention=True)([local2.output, global_features.output])
     a3 = AttentionGate(64, grid_attention=True)([local3.output, global_features.output])
 
-    attended_features1 = local1.output * a1
+    attended_features1 = layers.Multiply()([local1.output, a1])
     attended_features1 = tf.keras.layers.GlobalAveragePooling2D()(attended_features1)
     attended_features1 = Dense(2048, activation="relu")(attended_features1)
     attended_features1 = Dense(classes, activation="softmax")(attended_features1)
 
-    attended_features2 = local2.output * a2
+    attended_features2 = layers.Multiply()([local2.output, a2])
     attended_features2 = tf.keras.layers.GlobalAveragePooling2D()(attended_features2)
     attended_features2 = Dense(2048, activation="relu")(attended_features2)
     attended_features2 = Dense(classes, activation="softmax")(attended_features2)
 
-    attended_features3 = local3.output * a3
+    attended_features3 = layers.Multiply()([local3.output, a3])
     attended_features3 = tf.keras.layers.GlobalAveragePooling2D()(attended_features3)
     attended_features3 = Dense(2048, activation="relu")(attended_features3)
     attended_features3 = Dense(classes, activation="softmax")(attended_features3)
 
-    final = (attended_features1 + attended_features2 + attended_features3 + basenet.output) / 4.0
+    final = layers.Average()([attended_features1, attended_features2, attended_features3, basenet.output])
 
     model = tf.keras.models.Model(inputs=input_layer, outputs=final)
     model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])

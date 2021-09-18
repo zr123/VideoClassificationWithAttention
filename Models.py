@@ -142,24 +142,28 @@ def lstm_test(input_shape=(FRAMES, HEIGHT, WIDTH, CHANNELS), classes=CLASSES):
     return model
 
 
-# typical input_shape=(None, 224, 224, 3)
-# typical input_shape=(None, 224, 224, 20)
+
+def wrapper_ResNet(input_shape=None, classes=1000, fn=tf.keras.applications.ResNet50V2):
+    """ Small compatability wrapper for additional arguments like weights=None"""
+    return fn(input_shape=input_shape, classes=classes, weights=None)
+
+
 def create_TwoStreamModel(
         input_shape=(None, HEIGHT, WIDTH, 3),
         optflow_shape=(None, HEIGHT, WIDTH, 20),
         classes=CLASSES,
-        fn_create_base_model=tf.keras.applications.ResNet50V2,
+        fn_create_base_model=wrapper_ResNet,
         fusion="average"):
     assert fusion in ["average"], "Unknown parameter for fusion: " + str(fusion)
 
     # Spatial Stream 2D-ConvNet
     spatial_stream_input = Input(input_shape)
-    spatial_stream = fn_create_base_model(input_shape=input_shape[1:4], classes=classes, weights=None)
+    spatial_stream = fn_create_base_model(input_shape=input_shape[1:4], classes=classes)
     spatial_stream = TimeDistributed(spatial_stream)(spatial_stream_input)
 
     # Temporal Stream 2D-ConvNet
     temporal_stream_input = Input(optflow_shape)
-    temporal_stream = fn_create_base_model(input_shape=optflow_shape[1:4], classes=classes, weights=None)
+    temporal_stream = fn_create_base_model(input_shape=optflow_shape[1:4], classes=classes)
     temporal_stream = TimeDistributed(temporal_stream)(temporal_stream_input)
 
     # late fusion

@@ -28,7 +28,6 @@ class AttentionGate(keras.layers.Layer):
         attention = tf.math.reduce_mean(attention, axis=-1, keepdims=True)
         return attention
 
-
     def build(self, input_shape):
         local_feature_shape, global_feature_shape = input_shape
         self.local_Conv1D = Conv1D(self.inter_channels, 1, use_bias=False)
@@ -60,3 +59,7 @@ class AttentionGate(keras.layers.Layer):
             global_component = tf.expand_dims(tf.expand_dims(global_component, axis=1), axis=1)
         compatibility = self.joining_Conv1D(ReLU()(local_component + global_component))
         return compatibility
+
+    def compute_output_shape(self, input_shape):
+        local_feature_shape, global_feature_shape = input_shape
+        return local_feature_shape[0:3] + (1,)

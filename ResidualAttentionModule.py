@@ -75,5 +75,5 @@ def create_mask_branch_inner_shortcuts(x, filters, r, residual_block_fn, shortcu
     for i in range(r):
         x = residual_block_fn(x, filters, name=name + "_mask_inner" + str(shortcuts) + "_postblock" + str(i))
     x = UpSampling2D()(x)
-    x = x + shortcut
+    x = tf.keras.layers.Add()([x, shortcut])
     return x

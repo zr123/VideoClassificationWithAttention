@@ -48,16 +48,26 @@ def test_lstm_test(classes):
 def test_create_TwoStreamModel(classes):
     dummy_vid = np.zeros((1, 20, 224, 224, 3))
     dummy_optflow = np.zeros((1, 15, 224, 224, 20))
-
     model = Models.create_TwoStreamModel(
         input_shape=(None, 224, 224, 3),
         optflow_shape=(None, 224, 224, 20),
-        classes=classes,
-        fn_create_base_model=tf.keras.applications.ResNet50V2,
-        fusion="average"
+        classes=classes
     )
-
     tf.debugging.assert_shapes([(model.output, (None, classes))])
+    model.predict([dummy_vid, dummy_optflow])
+
+
+@pytest.mark.parametrize("model", [
+    AttentionModels.create_AttentionGated_ResNet50v2,
+    AttentionModels.create_AttentionGatedGrid_ResNet50v2
+])
+def test_create_TwoStreamModel_models(model):
+    dummy_vid = np.zeros((1, 20, 224, 224, 3))
+    dummy_optflow = np.zeros((1, 15, 224, 224, 20))
+    model = Models.create_TwoStreamModel(
+        fn_create_base_model=model
+    )
+    tf.debugging.assert_shapes([(model.output, (None, 51))])
     model.predict([dummy_vid, dummy_optflow])
 
 
