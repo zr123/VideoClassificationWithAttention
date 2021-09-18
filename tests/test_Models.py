@@ -7,6 +7,7 @@ sys.path.append('../VideoClassificationWithAttention')
 import Models
 import AttentionModels
 import tensorflow as tf
+import numpy as np
 
 
 ################
@@ -45,8 +46,19 @@ def test_lstm_test(classes):
 
 @pytest.mark.parametrize("classes", [51, 101, 174])
 def test_create_TwoStreamModel(classes):
-    model = Models.create_TwoStreamModel((None, 224, 224, 3), (None, 224, 224, 3), num_classes=classes)
+    dummy_vid = np.zeros((1, 20, 224, 224, 3))
+    dummy_optflow = np.zeros((1, 15, 224, 224, 20))
+
+    model = Models.create_TwoStreamModel(
+        input_shape=(None, 224, 224, 3),
+        optflow_shape=(None, 224, 224, 20),
+        classes=classes,
+        fn_create_base_model=tf.keras.applications.ResNet50V2,
+        fusion="average"
+    )
+
     tf.debugging.assert_shapes([(model.output, (None, classes))])
+    model.predict([dummy_vid, dummy_optflow])
 
 
 ################

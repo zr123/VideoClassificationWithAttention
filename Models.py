@@ -2,12 +2,13 @@ import tensorflow as tf
 from tensorflow.python.keras import Input
 from tensorflow.python.keras.layers import TimeDistributed, Conv2D, MaxPooling2D, Flatten, Dense, Conv3D, MaxPooling3D, \
     LSTM, GlobalAveragePooling2D, BatchNormalization, Dropout, Average
+from tensorflow.python.keras import layers
 from tensorflow.python.keras.models import Sequential, Model
 from tensorflow.keras.applications import InceptionResNetV2
 
 # downscaled defaults for hmdb51
-HEIGHT = 128
-WIDTH = 128
+HEIGHT = 224
+WIDTH = 224
 FRAMES = 40
 CHANNELS = 3
 CLASSES = 51
@@ -143,54 +144,28 @@ def lstm_test(input_shape=(FRAMES, HEIGHT, WIDTH, CHANNELS), num_classes=CLASSES
 
 # typical input_shape=(None, 224, 224, 3)
 # typical input_shape=(None, 224, 224, 20)
-def create_TwoStreamModel(input_shape=(FRAMES, HEIGHT, WIDTH, CHANNELS), optflow_shape=(FRAMES, HEIGHT, WIDTH, CHANNELS), num_classes=CLASSES):
-    # Spatial Stream ConvNet
+def create_TwoStreamModel(
+        input_shape=(None, HEIGHT, WIDTH, 3),
+        optflow_shape=(None, HEIGHT, WIDTH, 20),
+        classes=CLASSES,
+        fn_create_base_model=tf.keras.applications.ResNet50V2,
+        fusion="average"):
+    assert fusion in ["average"], "Unknown parameter for fusion: " + str(fusion)
+
+    # Spatial Stream 2D-ConvNet
     spatial_stream_input = Input(input_shape)
-    spatial_stream = Sequential([
-        Conv2D(96, 7, 2, activation="relu", name="spatial_conv1"),
-        MaxPooling2D(3, 2),
-        BatchNormalization(),
-        Conv2D(256, 5, 2, activation="relu", name="spatial_conv2"),
-        MaxPooling2D(3, 2),
-        BatchNormalization(),
-        Conv2D(512, 3, 1, activation="relu", name="spatial_conv3"),
-        Conv2D(512, 3, 1, activation="relu", name="spatial_conv4"),
-        Conv2D(512, 3, 1, activation="relu", name="spatial_conv5"),
-        MaxPooling2D(3, 2),
-        Flatten(),
-        Dense(4096, activation="relu", name="spatial_full6"),
-        Dropout(0.5),
-        Dense(2048, activation="relu", name="spatial_full7"),
-        Dropout(0.5),
-        Dense(num_classes, activation="softmax", name="spatial_softmax")
-    ])
+    spatial_stream = fn_create_base_model(input_shape=input_shape[1:4], classes=classes, weights=None)
     spatial_stream = TimeDistributed(spatial_stream)(spatial_stream_input)
 
-    # Temporal Stream ConvNet
+    # Temporal Stream 2D-ConvNet
     temporal_stream_input = Input(optflow_shape)
-    temporal_stream = Sequential([
-        Conv2D(96, 7, 2, activation="relu", name="temporal_conv1"),
-        MaxPooling2D(3, 2),
-        BatchNormalization(),
-        Conv2D(256, 5, 2, activation="relu", name="temporal_conv2"),
-        MaxPooling2D(3, 2),
-        BatchNormalization(),
-        Conv2D(512, 3, 1, activation="relu", name="temporal_conv3"),
-        Conv2D(512, 3, 1, activation="relu", name="temporal_conv4"),
-        Conv2D(512, 3, 1, activation="relu", name="temporal_conv5"),
-        MaxPooling2D(3, 2),
-        Flatten(),
-        Dense(4096, activation="relu", name="temporal_full6"),
-        Dropout(0.5),
-        Dense(2048, activation="relu", name="temporal_full7"),
-        Dropout(0.5),
-        Dense(num_classes, activation="softmax", name="temporal_softmax")
-    ])
+    temporal_stream = fn_create_base_model(input_shape=optflow_shape[1:4], classes=classes, weights=None)
     temporal_stream = TimeDistributed(temporal_stream)(temporal_stream_input)
 
     # late fusion
-    fusion = Average()([spatial_stream, temporal_stream])
-    fusion = tf.math.reduce_mean(fusion, axis=1)
+    if fusion == "average":
+        fusion = layers.Concatenate(axis=1)([spatial_stream, temporal_stream])
+        fusion = tf.math.reduce_mean(fusion, axis=1)
 
     model = Model(inputs=[spatial_stream_input, temporal_stream_input], outputs=fusion)
     model.compile(
