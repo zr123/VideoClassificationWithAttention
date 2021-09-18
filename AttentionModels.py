@@ -14,8 +14,8 @@ CHANNELS = 3
 CLASSES = 51
 
 
-def create_L2PA_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), num_classes=CLASSES):
-    basenet = tf.keras.applications.ResNet50V2(input_shape=input_shape, classes=num_classes, weights=None)
+def create_L2PA_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), classes=CLASSES):
+    basenet = tf.keras.applications.ResNet50V2(input_shape=input_shape, classes=classes, weights=None)
 
     input_layer = basenet.input
 
@@ -40,7 +40,7 @@ def create_L2PA_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), num_classes=CL
     ])
     model_output = tf.keras.layers.Dense(1024, activation="relu")(model_output)
     model_output = Dropout(0.5)(model_output)
-    model_output = tf.keras.layers.Dense(num_classes, activation="softmax")(model_output)
+    model_output = tf.keras.layers.Dense(classes, activation="softmax")(model_output)
 
     train_model = Model(inputs=input_layer, outputs=model_output)
     train_model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
@@ -62,8 +62,8 @@ def get_attention_extractor(model):
     return attention_extractor_model
 
 
-def create_AttentionGated_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), num_classes=CLASSES):
-    basenet = tf.keras.applications.ResNet50V2(input_shape=input_shape, classes=num_classes, weights=None)
+def create_AttentionGated_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), classes=CLASSES):
+    basenet = tf.keras.applications.ResNet50V2(input_shape=input_shape, classes=classes, weights=None)
 
     input_layer = basenet.input
 
@@ -85,17 +85,17 @@ def create_AttentionGated_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), num_
     attended_features1 = local1.output * a1
     attended_features1 = tf.keras.layers.GlobalAveragePooling2D()(attended_features1)
     attended_features1 = Dense(2048, activation="relu")(attended_features1)
-    attended_features1 = Dense(num_classes, activation="softmax")(attended_features1)
+    attended_features1 = Dense(classes, activation="softmax")(attended_features1)
 
     attended_features2 = local2.output * a2
     attended_features2 = tf.keras.layers.GlobalAveragePooling2D()(attended_features2)
     attended_features2 = Dense(2048, activation="relu")(attended_features2)
-    attended_features2 = Dense(num_classes, activation="softmax")(attended_features2)
+    attended_features2 = Dense(classes, activation="softmax")(attended_features2)
 
     attended_features3 = local3.output * a3
     attended_features3 = tf.keras.layers.GlobalAveragePooling2D()(attended_features3)
     attended_features3 = Dense(2048, activation="relu")(attended_features3)
-    attended_features3 = Dense(num_classes, activation="softmax")(attended_features3)
+    attended_features3 = Dense(classes, activation="softmax")(attended_features3)
 
     final = (attended_features1 + attended_features2 + attended_features3 + basenet.output) / 4.0
 
@@ -105,8 +105,8 @@ def create_AttentionGated_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), num_
     return model
 
 
-def create_AttentionGatedGrid_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), num_classes=CLASSES):
-    basenet = tf.keras.applications.ResNet50V2(input_shape=input_shape, classes=num_classes, weights=None)
+def create_AttentionGatedGrid_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), classes=CLASSES):
+    basenet = tf.keras.applications.ResNet50V2(input_shape=input_shape, classes=classes, weights=None)
     input_layer = basenet.input
 
     for layer in basenet.layers:
@@ -126,17 +126,17 @@ def create_AttentionGatedGrid_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), 
     attended_features1 = local1.output * a1
     attended_features1 = tf.keras.layers.GlobalAveragePooling2D()(attended_features1)
     attended_features1 = Dense(2048, activation="relu")(attended_features1)
-    attended_features1 = Dense(num_classes, activation="softmax")(attended_features1)
+    attended_features1 = Dense(classes, activation="softmax")(attended_features1)
 
     attended_features2 = local2.output * a2
     attended_features2 = tf.keras.layers.GlobalAveragePooling2D()(attended_features2)
     attended_features2 = Dense(2048, activation="relu")(attended_features2)
-    attended_features2 = Dense(num_classes, activation="softmax")(attended_features2)
+    attended_features2 = Dense(classes, activation="softmax")(attended_features2)
 
     attended_features3 = local3.output * a3
     attended_features3 = tf.keras.layers.GlobalAveragePooling2D()(attended_features3)
     attended_features3 = Dense(2048, activation="relu")(attended_features3)
-    attended_features3 = Dense(num_classes, activation="softmax")(attended_features3)
+    attended_features3 = Dense(classes, activation="softmax")(attended_features3)
 
     final = (attended_features1 + attended_features2 + attended_features3 + basenet.output) / 4.0
 
@@ -146,7 +146,7 @@ def create_AttentionGatedGrid_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), 
     return model
 
 
-def create_ResidualAttention_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), num_classes=CLASSES):
+def create_ResidualAttention_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), classes=CLASSES):
     def ResidualAttention_stack(x, filters, blocks, shortcuts, stride1=2, name=None):
         x = resnet.block2(x, filters, conv_shortcut=True, name=name + '_block1')
         for i in range(2, blocks):
@@ -172,12 +172,12 @@ def create_ResidualAttention_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), n
         input_tensor=None,
         input_shape=input_shape,
         pooling=None,
-        classes=num_classes,
+        classes=classes,
         classifier_activation="softmax")
 
 
-def create_CBAM_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), num_classes=CLASSES):
-    def CBAM_stack(x, filters, blocks, shortcuts, stride1=2, name=None):
+def create_CBAM_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), classes=CLASSES):
+    def CBAM_stack(x, filters, blocks, stride1=2, name=None):
         x = resnet.block2(x, filters, conv_shortcut=True, name=name + '_block1')
         for i in range(2, blocks):
             x = resnet.block2(x, filters, name=name + '_block' + str(i))
@@ -190,9 +190,9 @@ def create_CBAM_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), num_classes=CL
         return x
 
     def stack_fn(x):
-        x = CBAM_stack(x, 64, 3, shortcuts=2, name='conv2')
-        x = CBAM_stack(x, 128, 4, shortcuts=1, name='conv3')
-        x = CBAM_stack(x, 256, 6, shortcuts=0, name='conv4')
+        x = CBAM_stack(x, 64, 3, name='conv2')
+        x = CBAM_stack(x, 128, 4, name='conv3')
+        x = CBAM_stack(x, 256, 6, name='conv4')
         return resnet.stack2(x, 512, 3, stride1=1, name='conv5')
 
     return resnet.ResNet(
@@ -205,5 +205,5 @@ def create_CBAM_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), num_classes=CL
         input_tensor=None,
         input_shape=input_shape,
         pooling=None,
-        classes=num_classes,
+        classes=classes,
         classifier_activation="softmax")

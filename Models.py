@@ -14,7 +14,7 @@ CHANNELS = 3
 CLASSES = 51
 
 
-def create_2DCNN_MLP(input_shape=(FRAMES, HEIGHT, WIDTH, CHANNELS), num_classes=CLASSES):
+def create_2DCNN_MLP(input_shape=(FRAMES, HEIGHT, WIDTH, CHANNELS), classes=CLASSES):
     model = Sequential(name="2DCNN_MLP")
     model.add(Input(input_shape))
     # 2D conv layers with time distribution
@@ -34,7 +34,7 @@ def create_2DCNN_MLP(input_shape=(FRAMES, HEIGHT, WIDTH, CHANNELS), num_classes=
     model.add(Dense(256, activation="relu"))
     model.add(Dense(256, activation="relu"))
     # finalize
-    model.add(Dense(num_classes, activation='softmax'))
+    model.add(Dense(classes, activation='softmax'))
     model.compile(
         optimizer='adam',
         loss="categorical_crossentropy",
@@ -42,7 +42,7 @@ def create_2DCNN_MLP(input_shape=(FRAMES, HEIGHT, WIDTH, CHANNELS), num_classes=
     return model
 
 
-def create_3DCNN(input_shape=(FRAMES, HEIGHT, WIDTH, CHANNELS), num_classes=CLASSES):
+def create_3DCNN(input_shape=(FRAMES, HEIGHT, WIDTH, CHANNELS), classes=CLASSES):
     model = Sequential(name="3DCNN")
     model.add(Input(input_shape))
     # 3D conv layers
@@ -57,7 +57,7 @@ def create_3DCNN(input_shape=(FRAMES, HEIGHT, WIDTH, CHANNELS), num_classes=CLAS
     model.add(Dense(64, activation="relu"))
     model.add(Dense(32, activation="relu"))
     # finalize
-    model.add(Dense(num_classes, activation='softmax'))
+    model.add(Dense(classes, activation='softmax'))
     model.compile(
         optimizer='adam',
         loss="categorical_crossentropy",
@@ -65,7 +65,7 @@ def create_3DCNN(input_shape=(FRAMES, HEIGHT, WIDTH, CHANNELS), num_classes=CLAS
     return model
 
 
-def create_LSTM(input_shape=(FRAMES, HEIGHT, WIDTH, CHANNELS), num_classes=CLASSES):
+def create_LSTM(input_shape=(FRAMES, HEIGHT, WIDTH, CHANNELS), classes=CLASSES):
     model = Sequential(name="LSTM")
     model.add(Input(input_shape))
     # 2D conv Layers with time distribution
@@ -86,7 +86,7 @@ def create_LSTM(input_shape=(FRAMES, HEIGHT, WIDTH, CHANNELS), num_classes=CLASS
     model.add(Dense(64, activation="relu"))
     model.add(Dense(64, activation="relu"))
     # finalize
-    model.add(Dense(num_classes, activation="softmax"))
+    model.add(Dense(classes, activation="softmax"))
     model.compile(
         optimizer='adam',
         loss="categorical_crossentropy",
@@ -94,7 +94,7 @@ def create_LSTM(input_shape=(FRAMES, HEIGHT, WIDTH, CHANNELS), num_classes=CLASS
     return model
 
 
-def create_Transfer_LSTM(input_shape=(FRAMES, HEIGHT, WIDTH, CHANNELS), num_classes=CLASSES):
+def create_Transfer_LSTM(input_shape=(FRAMES, HEIGHT, WIDTH, CHANNELS), classes=CLASSES):
     model = Sequential(name="TransferLSTM")
     model.add(Input(input_shape))
     model.add(
@@ -110,7 +110,7 @@ def create_Transfer_LSTM(input_shape=(FRAMES, HEIGHT, WIDTH, CHANNELS), num_clas
     model.add(Dense(64, activation="relu"))
     model.add(Dense(64, activation="relu"))
     # finalize
-    model.add(Dense(num_classes, activation="softmax"))
+    model.add(Dense(classes, activation="softmax"))
     model.compile(
         optimizer='adam',
         loss="categorical_crossentropy",
@@ -118,7 +118,7 @@ def create_Transfer_LSTM(input_shape=(FRAMES, HEIGHT, WIDTH, CHANNELS), num_clas
     return model
 
 
-def lstm_test(input_shape=(FRAMES, HEIGHT, WIDTH, CHANNELS), num_classes=CLASSES):
+def lstm_test(input_shape=(FRAMES, HEIGHT, WIDTH, CHANNELS), classes=CLASSES):
     model = Sequential(name="TrailTransferLSTM")
     model.add(Input(input_shape))
     model.add(
@@ -134,7 +134,7 @@ def lstm_test(input_shape=(FRAMES, HEIGHT, WIDTH, CHANNELS), num_classes=CLASSES
                    dropout=0.5))
     model.add(Dense(512, activation='relu'))
     model.add(Dropout(0.5))
-    model.add(Dense(num_classes, activation='softmax'))
+    model.add(Dense(classes, activation='softmax'))
     model.compile(
         optimizer='adam',
         loss="categorical_crossentropy",
