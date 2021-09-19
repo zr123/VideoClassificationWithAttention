@@ -66,3 +66,7 @@ class AttentionModule(keras.layers.Layer):
         # so the addition is broadcast across all spatial features
         expanded_g = tf.expand_dims(tf.expand_dims(global_features, axis=1), axis=1)
         return tf.tensordot(local_features + expanded_g, self.u, axes=1)
+
+    def compute_output_shape(self, input_shape):
+        local_feature_shape, global_feature_shape = input_shape
+        return local_feature_shape[0:3] + (1,)

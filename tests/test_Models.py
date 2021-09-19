@@ -58,8 +58,11 @@ def test_create_TwoStreamModel(classes):
 
 
 @pytest.mark.parametrize("model", [
+    AttentionModels.create_L2PA_ResNet50v2,
     AttentionModels.create_AttentionGated_ResNet50v2,
-    AttentionModels.create_AttentionGatedGrid_ResNet50v2
+    AttentionModels.create_AttentionGatedGrid_ResNet50v2,
+    AttentionModels.create_ResidualAttention_ResNet50v2,
+    AttentionModels.create_CBAM_ResNet50v2
 ])
 def test_create_TwoStreamModel_models(model):
     dummy_vid = np.zeros((1, 20, 224, 224, 3))

@@ -28,7 +28,8 @@ def create_channel_attention_block(x, r, channel_count):
     channel_attention = activations.sigmoid(mlp(f_c_avg) + mlp(f_c_max))
     # expand tensor shape to (batch_size, 1, 1, channel_count) so we can properly multiply with x
     channel_attention = tf.expand_dims(tf.expand_dims(channel_attention, axis=1), axis=1)
-    return x * channel_attention
+    channel_attention = layers.Multiply()([x, channel_attention])
+    return channel_attention
 
 
 def create_spatial_attention_block(x, k):
@@ -36,4 +37,5 @@ def create_spatial_attention_block(x, k):
     f_s_max = tf.math.reduce_max(x, axis=-1, keepdims=True)  # "channel-wise max-pooling"
     combined_spatial_features = layers.Concatenate()([f_s_avg, f_s_max])
     spatial_attention = layers.Conv2D(1, k, padding="same", activation="sigmoid")(combined_spatial_features)
-    return x * spatial_attention
+    spatial_attention = layers.Multiply()([x, spatial_attention])
+    return spatial_attention

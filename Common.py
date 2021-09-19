@@ -22,6 +22,22 @@ def evaluate_dataset(path="D:\datasets\hmdb51_org", shuffle=False, random_state=
     return df
 
 
+def get_hmdb51_split(path="D:/datasets/hmdb51_org_splits", split_no=1):
+    assert split_no in [1, 2, 3], "split_no must be 1, 2, 3, got: " + str(split_no)
+
+    split_df = pd.DataFrame(columns=["filename", "split"])
+    for path, directories, files in os.walk(path):
+        for file in files:
+            if "_split" + str(split_no) + ".txt" in file:
+                fo = open(path + "/" + file, "r")
+                lines = fo.readlines()
+                fo.close()
+                for line in lines:
+                    filename, split = line.split()
+                    split_df.loc[len(split_df)] = (filename, int(split))
+    return split_df
+
+
 def load_video(path):
     cap = cv2.VideoCapture(path)
     video = []
@@ -56,7 +72,7 @@ def grayscale_video(video):
     return np.array(grayscaled_video)
 
 
-def get_formatted_video(path, resize_shape=None, grayscale=False, downsampling_frames=None, proprocessing=None):
+def get_formatted_video(path, resize_shape=None, grayscale=False, downsampling_frames=None, proprocessing_function=None):
     video = load_video(path)
     if resize_shape is not None:
         video = resize_video(video, resize_shape)
@@ -65,14 +81,8 @@ def get_formatted_video(path, resize_shape=None, grayscale=False, downsampling_f
     if grayscale:
         video = grayscale_video(video)
         video = video.reshape(video.shape[0:3] + (1,))
-    if proprocessing is not None:
-        if proprocessing == "normalize":
-            video = video / 255.0
-            video = np.float32(video)
-        elif proprocessing == "InceptionResNetV2":
-            video = tf.keras.applications.inception_resnet_v2.preprocess_input(video)
-        else:
-            raise Exception("Unexpected argument for preprocessing")
+    if proprocessing_function is not None:
+        video = proprocessing_function(video)
     return video
 
 
@@ -88,15 +98,44 @@ def save_video(videoarray, filename):
     out.release()
 
 
-def convert_dataset(dataframe, target_directory,
-                    resize_shape=(128, 128),  # (width, height,)
+def save_images(videoarray, filename):
+    filename, _ = filename.split(".")
+    for i in range(len(videoarray)):
+        cv2.imwrite(filename + "_" + str(i) + ".png", videoarray[i])
+
+
+def save_npz(videoarray, filename):
+    filename, _ = filename.split(".")
+    np.savez_compressed(filename, videoarray)
+
+
+def convert_dataset(dataframe,
+                    target_directory,
+                    resize_shape=None,  # (width, height,)
                     grayscale=False,
                     downsampling_frames=40,
-                    normalize=False):
+                    proprocessing_function=None,
+                    save_as="video"):
+    assert save_as in ["video", "images", "npz"], "Unrecognized argument for save_as: " + save_as
     for _, row in dataframe.iterrows():
         os.makedirs(target_directory + str(row.category) + "/", exist_ok=True)
-        vid = get_formatted_video(row.path, resize_shape, grayscale, downsampling_frames, normalize)
-        save_video(vid, target_directory + str(row.category) + "/" + row.filename)
+        vid = get_formatted_video(row.path, resize_shape, grayscale, downsampling_frames, proprocessing_function)
+        if save_as == "video":
+            save_video(vid, target_directory + str(row.category) + "/" + row.filename)
+        if save_as == "images":
+            save_images(vid, target_directory + str(row.category) + "/" + row.filename)
+        if save_as == "npz":
+            save_npz(vid, target_directory + str(row.category) + "/" + row.filename)
+
+
+def convert_optflow_dataset(dataframe, target_directory, save_as="npz", L=10):
+    assert save_as in ["npz"], "Unrecognized argument for save_as: " + save_as
+    for _, row in dataframe.iterrows():
+        os.makedirs(target_directory + str(row.category) + "/", exist_ok=True)
+        vid = load_video(row.path)
+        if save_as == "npz":
+            optflow = calcStackedOpticalFlow(vid, L)
+            save_npz(optflow, target_directory + str(row.category) + "/" + row.filename)
 
 
 # simple dense optflow vector with horizontal and vertical component

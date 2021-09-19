@@ -1,5 +1,4 @@
 import tensorflow as tf
-from tensorflow.python.keras.layers import Dense, Dropout, Flatten
 from tensorflow.python.keras import layers
 from AttentionModule import AttentionModule
 from AttentionGate import AttentionGate
@@ -34,12 +33,12 @@ def create_L2PA_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), classes=CLASSE
     attention3 = AttentionModule()([local3.output, global_features.output])
 
     model_output = tf.keras.layers.Concatenate()([
-        Flatten()(attention1),
-        Flatten()(attention2),
-        Flatten()(attention3)
+        layers.Flatten()(attention1),
+        layers.Flatten()(attention2),
+        layers.Flatten()(attention3)
     ])
     model_output = tf.keras.layers.Dense(1024, activation="relu")(model_output)
-    model_output = Dropout(0.5)(model_output)
+    model_output = layers.Dropout(0.5)(model_output)
     model_output = tf.keras.layers.Dense(classes, activation="softmax")(model_output)
 
     train_model = Model(inputs=input_layer, outputs=model_output)
@@ -84,18 +83,18 @@ def create_AttentionGated_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), clas
 
     attended_features1 = layers.Multiply()([local1.output, a1])
     attended_features1 = tf.keras.layers.GlobalAveragePooling2D()(attended_features1)
-    attended_features1 = Dense(2048, activation="relu")(attended_features1)
-    attended_features1 = Dense(classes, activation="softmax")(attended_features1)
+    attended_features1 = layers.Dense(2048, activation="relu")(attended_features1)
+    attended_features1 = layers.Dense(classes, activation="softmax")(attended_features1)
 
     attended_features2 = layers.Multiply()([local2.output, a2])
     attended_features2 = tf.keras.layers.GlobalAveragePooling2D()(attended_features2)
-    attended_features2 = Dense(2048, activation="relu")(attended_features2)
-    attended_features2 = Dense(classes, activation="softmax")(attended_features2)
+    attended_features2 = layers.Dense(2048, activation="relu")(attended_features2)
+    attended_features2 = layers.Dense(classes, activation="softmax")(attended_features2)
 
     attended_features3 = layers.Multiply()([local3.output, a3])
     attended_features3 = tf.keras.layers.GlobalAveragePooling2D()(attended_features3)
-    attended_features3 = Dense(2048, activation="relu")(attended_features3)
-    attended_features3 = Dense(classes, activation="softmax")(attended_features3)
+    attended_features3 = layers.Dense(2048, activation="relu")(attended_features3)
+    attended_features3 = layers.Dense(classes, activation="softmax")(attended_features3)
 
     final = layers.Average()([attended_features1, attended_features2, attended_features3, basenet.output])
 
@@ -125,18 +124,18 @@ def create_AttentionGatedGrid_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), 
 
     attended_features1 = layers.Multiply()([local1.output, a1])
     attended_features1 = tf.keras.layers.GlobalAveragePooling2D()(attended_features1)
-    attended_features1 = Dense(2048, activation="relu")(attended_features1)
-    attended_features1 = Dense(classes, activation="softmax")(attended_features1)
+    attended_features1 = layers.Dense(2048, activation="relu")(attended_features1)
+    attended_features1 = layers.Dense(classes, activation="softmax")(attended_features1)
 
     attended_features2 = layers.Multiply()([local2.output, a2])
     attended_features2 = tf.keras.layers.GlobalAveragePooling2D()(attended_features2)
-    attended_features2 = Dense(2048, activation="relu")(attended_features2)
-    attended_features2 = Dense(classes, activation="softmax")(attended_features2)
+    attended_features2 = layers.Dense(2048, activation="relu")(attended_features2)
+    attended_features2 = layers.Dense(classes, activation="softmax")(attended_features2)
 
     attended_features3 = layers.Multiply()([local3.output, a3])
     attended_features3 = tf.keras.layers.GlobalAveragePooling2D()(attended_features3)
-    attended_features3 = Dense(2048, activation="relu")(attended_features3)
-    attended_features3 = Dense(classes, activation="softmax")(attended_features3)
+    attended_features3 = layers.Dense(2048, activation="relu")(attended_features3)
+    attended_features3 = layers.Dense(classes, activation="softmax")(attended_features3)
 
     final = layers.Average()([attended_features1, attended_features2, attended_features3, basenet.output])
 
@@ -184,7 +183,7 @@ def create_CBAM_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), classes=CLASSE
 
         # CBAM module inserted here
         f_dashdash = CBAM.create_residual_attention_module(x)
-        x = x + f_dashdash
+        layers.Add()([x, f_dashdash])
 
         x = resnet.block2(x, filters, stride=stride1, name=name + '_block' + str(blocks))
         return x

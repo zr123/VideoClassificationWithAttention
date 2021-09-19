@@ -1,7 +1,7 @@
 import tensorflow as tf
 from tensorflow import keras
 import tensorflow.keras.backend as K
-from tensorflow.keras.layers import MaxPooling2D, UpSampling2D, Conv2D, Activation
+from tensorflow.keras import layers
 from tensorflow.keras.activations import sigmoid
 from tensorflow.python.keras.applications import resnet
 import AttentionCommon
@@ -33,7 +33,8 @@ def create_residual_attention_module(x, filters, p=1, t=2, r=1, residual_block_f
     mask = x
     mask = create_mask_branch(mask, filters, r, residual_block_fn, shortcuts, name, attention_function)
     # fusion
-    x = (trunk * mask) + trunk
+    x = layers.Multiply()([trunk, mask])
+    x = layers.Add()([x, trunk])
     # p: post-processing
     for i in range(p):
         x = residual_block_fn(x, filters, name=name + "_postblock" + str(i))
@@ -42,7 +43,7 @@ def create_residual_attention_module(x, filters, p=1, t=2, r=1, residual_block_f
 
 def create_mask_branch(x, filters, r, residual_block_fn, shortcuts, name, attention_function):
     # pre-block
-    x = MaxPooling2D()(x)
+    x = layers.MaxPooling2D()(x)
     for i in range(r):
         x = residual_block_fn(x, filters, name=name + "_mask_preblock" + str(i))
     # inner blocks & shortcutting
@@ -50,13 +51,13 @@ def create_mask_branch(x, filters, r, residual_block_fn, shortcuts, name, attent
     # post-block
     for i in range(r):
         x = residual_block_fn(x, filters, name=name + "_mask_postblock" + str(i))
-    x = UpSampling2D()(x)
-    x = Conv2D(filters * 4, 1)(x)
-    x = Conv2D(filters * 4, 1)(x)
+    x = layers.UpSampling2D()(x)
+    x = layers.Conv2D(filters * 4, 1)(x)
+    x = layers.Conv2D(filters * 4, 1)(x)
     if attention_function == "softmax":
         x = AttentionCommon.softmax2d(x, name=name + "_ResidualAttention")
     if attention_function == "sigmoid":
-        x = Activation(sigmoid, name=name + "_ResidualAttention")(x)
+        x = layers.Activation(sigmoid, name=name + "_ResidualAttention")(x)
     if attention_function == "pseudo-softmax":
         x = AttentionCommon.pseudo_softmax2d(x, name=name + "_ResidualAttention")
     return x
@@ -68,12 +69,12 @@ def create_mask_branch_inner_shortcuts(x, filters, r, residual_block_fn, shortcu
     if shortcuts == 0:
         return x
     shortcut = x 
-    x = MaxPooling2D()(x)
+    x = layers.MaxPooling2D()(x)
     for i in range(r):
         x = residual_block_fn(x, filters, name=name + "_mask_inner" + str(shortcuts) + "_preblock" + str(i))
     x = create_mask_branch_inner_shortcuts(x, filters, r, residual_block_fn, shortcuts - 1, name)
     for i in range(r):
         x = residual_block_fn(x, filters, name=name + "_mask_inner" + str(shortcuts) + "_postblock" + str(i))
-    x = UpSampling2D()(x)
+    x = layers.UpSampling2D()(x)
     x = tf.keras.layers.Add()([x, shortcut])
     return x

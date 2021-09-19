@@ -3,7 +3,7 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - python
+  - python=3.8.*
   - notebook
   - jupyter_contrib_nbextensions
   - ipywidgets
@@ -14,5 +14,7 @@ dependencies:
   - pydot
   - scikit-learn
   - pytest
+  - lime
+  - scikit-image
   - tensorflow=2.3.*
   - tensorflow-datasets
