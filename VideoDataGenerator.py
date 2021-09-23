@@ -10,13 +10,14 @@ class VideoDataGenerator(tf.keras.utils.Sequence):
                  path,
                  y,
                  num_classes,
+                 target_size,
                  optflow_path=None,
                  batch_size=4,
-                 target_size=None,
                  shear_range=None,
                  zoom_range=None,
                  horizontal_flip=False,
-                 preprocessing_function=tf.keras.applications.resnet_v2.preprocess_input):
+                 preprocessing_function=tf.keras.applications.resnet_v2.preprocess_input,
+                 shape_format="video"):
         self.path = path
         self.y = y
         self.num_classes = num_classes
@@ -24,15 +25,18 @@ class VideoDataGenerator(tf.keras.utils.Sequence):
         self.batch_size = batch_size
         self.img_datagen = tf.keras.preprocessing.image.ImageDataGenerator()
         self.preprocessing_function=preprocessing_function
-        self.transform_params = {
-            "shear": shear_range,
-            "zx": zoom_range,
-            "zy": zoom_range,
-            "flip_horizontal": horizontal_flip
-        }
+        self.transform_params = {}
+        if shear_range != None:
+            self.transform_params.update({"shear": shear_range})
+        if zoom_range != None:
+            self.transform_params.update({"zx": zoom_range, "zy": zoom_range})
+        if horizontal_flip != False:
+            self.transform_params.update({"flip_horizontal": horizontal_flip})
         self.target_size = target_size
         self.n = len(self.path)
         self.length = self.n // self.batch_size
+        assert shape_format in ["video", "images"], "Unexpected argument for shape_format: " + shape_format
+        self.shape_format = shape_format
 
     def on_epoch_end(self):
         # shuffle?
@@ -40,21 +44,55 @@ class VideoDataGenerator(tf.keras.utils.Sequence):
 
     # /from directory & from
     def __getitem__(self, index):
+        X_batch_vid, y_batch = self.get_batch(index)
+        if self.optflow_path is not None:
+            X_batch_optflow = self.get_x_batch_optflow(index)
+            return[X_batch_vid, X_batch_optflow], y_batch
+        else:
+            return X_batch_vid, y_batch
+
+    def get_batch(self, index):
         X_batch_vid = []
-        X_batch_optflow = []
         y_batch = []
         for i in range(index, index + self.batch_size):
             if i == self.n:
                 break
-            X_batch_vid.append(self.weasel(self.path[i], "video"))
-            X_batch_optflow.append(self.weasel(self.optflow_path[i], "npz"))
-            y_batch.append(to_categorical(self.y[i], num_classes=self.num_classes))
-        return [np.array(X_batch_vid), np.array(X_batch_optflow)], np.vstack(y_batch)
+            x = self.load_and_format_video(self.path[i])
+            X_batch_vid.append(x)
+            y = to_categorical(self.y[i], num_classes=self.num_classes)
+            if self.shape_format == "images":
+                y = np.expand_dims(y, axis=0)
+                y = np.repeat(y, x.shape[0], axis=0)
+            y_batch.append(y)
+        if self.shape_format == "video":
+            X_batch_vid = np.array(X_batch_vid)
+        if self.shape_format == "images":
+            X_batch_vid = np.vstack(X_batch_vid)
+        return X_batch_vid, np.vstack(y_batch)
+
+    def get_x_batch_optflow(self, index):
+        X_batch_optflow = []
+        for i in range(index, index + self.batch_size):
+            if i == self.n:
+                break
+            X_batch_optflow.append(self.load_and_format_video(self.optflow_path[i]))
+        if self.shape_format == "video":
+            X_batch_optflow = np.array(X_batch_optflow)
+        if self.shape_format == "images":
+            X_batch_optflow = np.vstack(X_batch_optflow)
+        return X_batch_optflow
 
     def __len__(self):
         return self.length
 
-    def weasel(self, path, format="video"):
+
+    def load_and_format_video(self, path, format="detect"):
+        if format == "detect":
+            file_extension = path.split(".")[-1]
+            if file_extension == "npz":
+                format = "npz"
+            if file_extension in ["avi", "mp4"]:
+                format = "video"
         if format == "video":
             vid = Common.load_video(path)
         if format == "npz":

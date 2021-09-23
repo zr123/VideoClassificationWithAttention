@@ -57,21 +57,14 @@ def test_create_TwoStreamModel(classes):
     model.predict([dummy_vid, dummy_optflow])
 
 
-@pytest.mark.parametrize("model", [
-    AttentionModels.create_L2PA_ResNet50v2,
-    AttentionModels.create_AttentionGated_ResNet50v2,
-    AttentionModels.create_AttentionGatedGrid_ResNet50v2,
-    AttentionModels.create_ResidualAttention_ResNet50v2,
-    AttentionModels.create_CBAM_ResNet50v2
-])
-def test_create_TwoStreamModel_models(model):
+def test_assemble_TwoStreamModel():
     dummy_vid = np.zeros((1, 20, 224, 224, 3))
     dummy_optflow = np.zeros((1, 15, 224, 224, 20))
-    model = Models.create_TwoStreamModel(
-        fn_create_base_model=model
-    )
-    tf.debugging.assert_shapes([(model.output, (None, 51))])
-    model.predict([dummy_vid, dummy_optflow])
+    vid_model = tf.keras.applications.ResNet50V2(input_shape=(224, 224, 3), include_top=True, classes=10, weights=False)
+    optflow_model = tf.keras.applications.ResNet50V2(input_shape=(224, 224, 20), include_top=True, classes=10, weights=False)
+    two_stream_model = Models.assemble_TwoStreamModel(vid_model, optflow_model, 51, fusion="average", recreate_top=True)
+    tf.debugging.assert_shapes([(two_stream_model.output, (None, 51))])
+    two_stream_model.predict([dummy_vid, dummy_optflow])
 
 
 ################
