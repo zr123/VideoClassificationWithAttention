@@ -44,24 +44,11 @@ def test_lstm_test(classes):
     tf.debugging.assert_shapes([(model.output, (None, classes))])
 
 
-@pytest.mark.parametrize("classes", [51, 101, 174])
-def test_create_TwoStreamModel(classes):
-    dummy_vid = np.zeros((1, 20, 224, 224, 3))
-    dummy_optflow = np.zeros((1, 15, 224, 224, 20))
-    model = Models.create_TwoStreamModel(
-        input_shape=(None, 224, 224, 3),
-        optflow_shape=(None, 224, 224, 20),
-        classes=classes
-    )
-    tf.debugging.assert_shapes([(model.output, (None, classes))])
-    model.predict([dummy_vid, dummy_optflow])
-
-
 def test_assemble_TwoStreamModel():
     dummy_vid = np.zeros((1, 20, 224, 224, 3))
     dummy_optflow = np.zeros((1, 15, 224, 224, 20))
-    vid_model = tf.keras.applications.ResNet50V2(input_shape=(224, 224, 3), include_top=True, classes=10, weights=False)
-    optflow_model = tf.keras.applications.ResNet50V2(input_shape=(224, 224, 20), include_top=True, classes=10, weights=False)
+    vid_model = tf.keras.applications.ResNet50V2(input_shape=(224, 224, 3), include_top=True, classes=10, weights=None)
+    optflow_model = tf.keras.applications.ResNet50V2(input_shape=(224, 224, 20), include_top=True, classes=10, weights=None)
     two_stream_model = Models.assemble_TwoStreamModel(vid_model, optflow_model, 51, fusion="average", recreate_top=True)
     tf.debugging.assert_shapes([(two_stream_model.output, (None, 51))])
     two_stream_model.predict([dummy_vid, dummy_optflow])
