@@ -135,6 +135,7 @@ def convert_optflow_dataset(dataframe, target_directory, save_as="npz", L=10):
         vid = load_video(row.path)
         if save_as == "npz":
             optflow = calcStackedOpticalFlow(vid, L)
+            optflow = optflow.astype(int)
             save_npz(optflow, target_directory + str(row.category) + "/" + row.filename)
 
 
