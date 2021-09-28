@@ -44,6 +44,14 @@ def test_lstm_test(classes):
     tf.debugging.assert_shapes([(model.output, (None, classes))])
 
 
+def test_assemble_lstm():
+    dummy_vid = np.zeros((1, 20, 224, 224, 3))
+    basenet = tf.keras.applications.ResNet50V2()
+    lstm = Models.assemble_lstm(basenet, classes=51, recreate_top=True)
+    tf.debugging.assert_shapes([(lstm.output, (None, 51))])
+    lstm.predict(dummy_vid)
+
+
 def test_assemble_TwoStreamModel():
     dummy_vid = np.zeros((1, 20, 224, 224, 3))
     dummy_optflow = np.zeros((1, 15, 224, 224, 20))

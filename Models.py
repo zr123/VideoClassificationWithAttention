@@ -92,6 +92,25 @@ def create_LSTM(input_shape=(FRAMES, HEIGHT, WIDTH, CHANNELS), classes=CLASSES):
     return model
 
 
+def assemble_lstm(basenet, classes, recreate_top=False):
+    inputs = layers.Input(basenet.inputs[0].shape)
+    if recreate_top:
+        x = layers.TimeDistributed(recreate_top_fn(basenet, classes))(inputs)
+    else:
+        x = layers.TimeDistributed(basenet)(inputs)
+
+    x = layers.LSTM(1024, return_sequences=False, dropout=0.5)(x)
+    x = layers.Dense(512, activation='relu')(x)
+    x = layers.Dropout(0.5)(x)
+    x = layers.Dense(classes, activation='softmax')(x)
+    model = Model(inputs=inputs, outputs=x)
+    model.compile(
+        optimizer='adam',
+        loss="categorical_crossentropy",
+        metrics=[tf.keras.metrics.Accuracy(), tf.keras.metrics.TopKCategoricalAccuracy(5)])
+    return model
+
+
 def create_Transfer_LSTM(input_shape=(FRAMES, HEIGHT, WIDTH, CHANNELS), classes=CLASSES):
     model = Sequential(name="TransferLSTM")
     model.add(Input(input_shape))
