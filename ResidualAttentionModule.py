@@ -1,10 +1,8 @@
 import tensorflow as tf
-from tensorflow import keras
-import tensorflow.keras.backend as K
 from tensorflow.keras import layers
 from tensorflow.keras.activations import sigmoid
 from tensorflow.python.keras.applications import resnet
-import AttentionCommon
+import Common
 
 
 def create_residual_attention_module(x, filters, p=1, t=2, r=1, residual_block_fn=resnet.block2, shortcuts=0,
@@ -55,11 +53,11 @@ def create_mask_branch(x, filters, r, residual_block_fn, shortcuts, name, attent
     x = layers.Conv2D(filters * 4, 1)(x)
     x = layers.Conv2D(filters * 4, 1)(x)
     if attention_function == "softmax":
-        x = AttentionCommon.softmax2d(x, name=name + "_ResidualAttention")
+        x = Common.softmax2d(x, name=name + "_ResidualAttention")
     if attention_function == "sigmoid":
         x = layers.Activation(sigmoid, name=name + "_ResidualAttention")(x)
     if attention_function == "pseudo-softmax":
-        x = AttentionCommon.pseudo_softmax2d(x, name=name + "_ResidualAttention")
+        x = Common.pseudo_softmax2d(x, name=name + "_ResidualAttention")
     return x
 
 

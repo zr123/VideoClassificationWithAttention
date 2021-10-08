@@ -2,7 +2,7 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras.layers import ReLU, Conv1D, Dense, Flatten, Reshape
 from tensorflow.keras.activations import softmax, sigmoid
-import AttentionCommon
+import Common
 
 
 class AttentionGate(keras.layers.Layer):
@@ -19,11 +19,11 @@ class AttentionGate(keras.layers.Layer):
         compatibility = self.compatibility_function(local_features, global_features)
 
         if self.attention_function == "softmax":
-            attention = AttentionCommon.softmax2d(compatibility, name=None)
+            attention = Common.softmax2d(compatibility, name=None)
         if self.attention_function == "sigmoid":
             attention = sigmoid(compatibility)
         if self.attention_function == "pseudo-softmax":
-            attention = AttentionCommon.pseudo_softmax2d(compatibility, name=None)
+            attention = Common.pseudo_softmax2d(compatibility, name=None)
 
         attention = tf.math.reduce_mean(attention, axis=-1, keepdims=True)
         return attention

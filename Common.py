@@ -5,7 +5,12 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 import matplotlib.pyplot as plt
+from tensorflow.keras import layers
+from tensorflow.keras import activations
 
+####################
+# Dataset Handling #
+####################
 
 def evaluate_dataset(path="D:\datasets\hmdb51_org", shuffle=False, random_state=42):
     df = pd.DataFrame()
@@ -204,3 +209,27 @@ def overlay_attention(image, overlay, rescale_image=True, cmap='inferno'):
 
     combined_image = cv2.addWeighted(image, 0.3, heatmap, 0.7, 0)
     return combined_image
+
+###########
+# Helpers #
+###########
+
+
+def softmax2d(x, name):
+    shape = x.shape
+    x = layers.Flatten()(x)
+    x = activations.softmax(x)
+    x = layers.Reshape(shape[1:], name=name)(x)
+    return x
+
+
+# pseudo-softmax: subtract by min value and divide by sum -> less sparse but similar properties as softmax
+def pseudo_softmax2d(x, name):
+    shape = x.shape
+    x = layers.Flatten()(x)
+    # x = (x - min(x)) / sum(x)
+    x = layers.Lambda(
+        lambda x: (x - tf.math.reduce_min(x, axis=-1, keepdims=True)) / tf.math.reduce_sum(x, axis=-1, keepdims=True)
+    )(x)
+    x = layers.Reshape(shape[1:], name=name)(x)
+    return x
