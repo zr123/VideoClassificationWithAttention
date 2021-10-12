@@ -1,11 +1,11 @@
 import tensorflow as tf
 from tensorflow.python.keras import layers
-from AttentionModule import AttentionModule
-from AttentionGate import AttentionGate
 from tensorflow.python.keras.models import Model
-import ResidualAttentionModule
 from tensorflow.python.keras.applications import resnet
-import CBAM
+from VCWA import ResidualAttentionModule, CBAM
+from VCWA.AttentionModule import AttentionModule
+from VCWA.AttentionGate import AttentionGate
+
 
 HEIGHT = 128
 WIDTH = 128

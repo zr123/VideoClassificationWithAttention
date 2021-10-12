@@ -1,7 +1,7 @@
 import tensorflow as tf
-import Common
 import numpy as np
 from tensorflow.keras.utils import to_categorical
+from VCWA import Common
 
 
 class VideoDataGenerator(tf.keras.utils.Sequence):

@@ -1,6 +1,6 @@
 import tensorflow as tf
-import Common
 import numpy as np
+from VCWA import Common
 
 
 class DatasetLoader(tf.keras.utils.Sequence):

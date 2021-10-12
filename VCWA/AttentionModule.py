@@ -1,7 +1,7 @@
 import tensorflow as tf
 from tensorflow import keras
 import tensorflow.keras.backend as K
-from tensorflow.keras.layers import Dense, Softmax, Flatten, Reshape
+from tensorflow.keras import layers
 
 
 class AttentionModule(keras.layers.Layer):
@@ -27,16 +27,16 @@ class AttentionModule(keras.layers.Layer):
         compatibility_scores = self.compatibility_function(local_features, global_feature_mapping)
 
         # calculate attention
-        compatibility_scores = Flatten()(compatibility_scores)
-        attention = Softmax()(compatibility_scores)
-        attention = Reshape(self.shape)(attention)
+        compatibility_scores = layers.Flatten()(compatibility_scores)
+        attention = layers.Softmax()(compatibility_scores)
+        attention = layers.Reshape(self.shape)(attention)
         return attention
 
     def build(self, input_shape):
         local_feature_shape, global_feature_shape = input_shape
         # mapping layer, to make sure global feature shape and local feature shape is the same
         self.shape = local_feature_shape[1:-1]
-        self.mapping_layer = Dense(local_feature_shape[-1])
+        self.mapping_layer = layers.Dense(local_feature_shape[-1])
         if self.compatibility_func == "weighted":
             self.u = self.add_weight(name='u', shape=(local_feature_shape[-1],), initializer="random_normal", trainable=True)
 

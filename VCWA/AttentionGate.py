@@ -2,7 +2,7 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras.layers import ReLU, Conv1D, Dense, Flatten, Reshape
 from tensorflow.keras.activations import softmax, sigmoid
-import Common
+from VCWA import Common
 
 
 class AttentionGate(keras.layers.Layer):

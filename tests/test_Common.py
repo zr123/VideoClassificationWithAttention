@@ -1,11 +1,6 @@
-import sys
 import pytest
 import numpy as np
-
-# set path
-sys.path.append('../VideoClassificationWithAttention')
-
-import Common
+from VCWA import Common
 
 
 @pytest.mark.parametrize("original_frames,downsampling_frames", [(100, 40), (69, 25)])

@@ -1,14 +1,8 @@
-import sys
 import pytest
-
-# set path
-sys.path.append('../VideoClassificationWithAttention')
-
-import Models
-import AttentionModels
 import tensorflow as tf
 import numpy as np
-
+from VCWA import Models
+from VCWA import AttentionModels
 
 ################
 # Video Models #

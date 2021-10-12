@@ -2,7 +2,7 @@ import tensorflow as tf
 from tensorflow.keras import layers
 from tensorflow.keras.activations import sigmoid
 from tensorflow.python.keras.applications import resnet
-import Common
+from VCWA import Common
 
 
 def create_residual_attention_module(x, filters, p=1, t=2, r=1, residual_block_fn=resnet.block2, shortcuts=0,
