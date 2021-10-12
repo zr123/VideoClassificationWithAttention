@@ -16,6 +16,7 @@ dependencies:
   - pytest
   - lime
   - scikit-image
+  - google-cloud-storage
   - tensorflow=2.3.*
   - tensorflow-datasets
   - pip

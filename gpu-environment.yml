@@ -16,6 +16,7 @@ dependencies:
   - pytest
   - lime
   - scikit-image
+  - google-cloud-storage
   - cudatoolkit=10.1 # requires cuDNN 7.6
   - pip
   - pip:
