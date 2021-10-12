@@ -11,6 +11,7 @@ from tensorflow.keras import activations
 # Dataset Handling #
 ####################
 
+
 def evaluate_dataset(path="D:/datasets/hmdb51_org", shuffle=False, random_state=42):
     df = pd.DataFrame()
     for path, directories, files in os.walk(path):
@@ -91,7 +92,7 @@ def get_formatted_video(path, resize_shape=None, grayscale=False, downsampling_f
 
 
 def save_video(videoarray, filename):
-    frames, height, width = (videoarray.shape)[0:3]
+    frames, height, width = videoarray.shape[0:3]
     fourcc = cv2.VideoWriter_fourcc('M', 'J', 'P', 'G')
     if len(videoarray.shape) == 4:
         out = cv2.VideoWriter(filename, fourcc, 10, (width, height))
@@ -152,6 +153,7 @@ def calcOpticalFlow(frame1, frame2):
         frame2 = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
     flow = cv2.calcOpticalFlowFarneback(frame1, frame2, None, 0.5, 3, 15, 3, 5, 1.2, 0)
     return flow
+
 
 # TODO: wie haben die das in dem Paper gemacht?
 def calcStackedOpticalFlow(video, stack_size_L=10):

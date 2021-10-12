@@ -13,41 +13,41 @@ class VideoDataGenerator(tf.keras.utils.Sequence):
                  target_size,
                  optflow_path=None,
                  batch_size=4,
-                 shear_range=None,
-                 zoom_range=None,
-                 horizontal_flip=False,
                  preprocessing_function=tf.keras.applications.resnet_v2.preprocess_input,
                  shape_format="video"):
+                 #shear_range = None,
+                 #zoom_range = None,
+                 #horizontal_flip = False
         self.path = path
         self.y = y
         self.num_classes = num_classes
         self.optflow_path = optflow_path
         self.batch_size = batch_size
         self.img_datagen = tf.keras.preprocessing.image.ImageDataGenerator()
-        self.preprocessing_function=preprocessing_function
-        self.transform_params = {}
-        if shear_range != None:
-            self.transform_params.update({"shear": shear_range})
-        if zoom_range != None:
-            self.transform_params.update({"zx": zoom_range, "zy": zoom_range})
-        if horizontal_flip != False:
-            self.transform_params.update({"flip_horizontal": horizontal_flip})
+        self.preprocessing_function = preprocessing_function
         self.target_size = target_size
         self.n = len(self.path)
         self.length = self.n // self.batch_size
         assert shape_format in ["video", "images"], "Unexpected argument for shape_format: " + shape_format
         self.shape_format = shape_format
+        # TODO: randomize transformation
+        #self.transform_params = {}
+        #if shear_range != None:
+        #    self.transform_params.update({"shear": shear_range})
+        #if zoom_range != None:
+        #    self.transform_params.update({"zx": 1-zoom_range, "zy": 1-zoom_range})
+        #if horizontal_flip != False:
+        #    self.transform_params.update({"flip_horizontal": horizontal_flip})
 
     def on_epoch_end(self):
         # shuffle?
         pass
 
-    # /from directory & from
     def __getitem__(self, index):
         X_batch_vid, y_batch = self.get_batch(index)
         if self.optflow_path is not None:
             X_batch_optflow = self.get_x_batch_optflow(index)
-            return[X_batch_vid, X_batch_optflow], y_batch
+            return [X_batch_vid, X_batch_optflow], y_batch
         else:
             return X_batch_vid, y_batch
 
@@ -85,20 +85,15 @@ class VideoDataGenerator(tf.keras.utils.Sequence):
     def __len__(self):
         return self.length
 
-
-    def load_and_format_video(self, path, format="detect"):
-        if format == "detect":
-            file_extension = path.split(".")[-1]
-            if file_extension == "npz":
-                format = "npz"
-            if file_extension in ["avi", "mp4"]:
-                format = "video"
-        if format == "video":
-            vid = Common.load_video(path)
-        if format == "npz":
+    def load_and_format_video(self, path):
+        file_extension = path.split(".")[-1]
+        if file_extension == "npz":
             npz = np.load(path, allow_pickle=True)
             vid = npz["arr_0"]
             npz.close()
+        if file_extension in ["avi", "mp4"]:
+            vid = Common.load_video(path)
+
         formatted_vid = []
         for frame in vid:
             frame = self.format_frame(frame)
@@ -106,7 +101,9 @@ class VideoDataGenerator(tf.keras.utils.Sequence):
         return np.array(formatted_vid)
 
     def format_frame(self, frame):
-        frame = self.img_datagen.apply_transform(frame, self.transform_params)
+        # TODO: randomize transform params
+        # frame = self.img_datagen.apply_transform(frame, self.transform_params)
         frame = tf.keras.preprocessing.image.smart_resize(frame, self.target_size)
-        frame = self.preprocessing_function(frame)
+        if self.preprocessing_function is not None:
+            frame = self.preprocessing_function(frame)
         return frame

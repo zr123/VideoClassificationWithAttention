@@ -3,6 +3,9 @@ from tensorflow.python.keras import Input
 from tensorflow.python.keras import layers
 from tensorflow.python.keras.models import Sequential, Model
 from tensorflow.keras.applications import InceptionResNetV2
+from VCWA import AttentionModels, Common
+import imageio
+import numpy as np
 
 # downscaled defaults for hmdb51
 HEIGHT = 224
@@ -187,3 +190,21 @@ def recreate_top_fn(model, classes):
     inputs = model.inputs
     outputs = layers.Dense(classes)(model.layers[-2].output)
     return Model(inputs=inputs, outputs=outputs)
+
+
+def get_twostream_attention(input, model, cmap='inferno'):
+    input1, input2, td1, td2 = model.layers[0:4]
+    layer_extractor_model = AttentionModels.get_attention_extractor(td1.layer)
+
+    _, a1, a2, a3 = layer_extractor_model.predict(input)
+    images = []
+    for i in range(input.shape[0]):
+        overlay = Common.combine_attention([a1[i], a2[i], a3[i]])
+        combined_image = Common.overlay_attention(input[i], overlay, cmap=cmap)
+        images.append(combined_image)
+    return images
+
+
+def attention_to_gif(images, path, fps=7):
+    images = (np.array(images)*255).astype(np.uint8)
+    imageio.mimsave(path, images, fps=fps)
