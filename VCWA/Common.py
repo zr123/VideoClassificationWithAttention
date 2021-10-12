@@ -11,15 +11,15 @@ from tensorflow.keras import activations
 # Dataset Handling #
 ####################
 
-def evaluate_dataset(path="D:\datasets\hmdb51_org", shuffle=False, random_state=42):
+def evaluate_dataset(path="D:/datasets/hmdb51_org", shuffle=False, random_state=42):
     df = pd.DataFrame()
     for path, directories, files in os.walk(path):
         for f in files:
-            path = path.replace("/", "\\")
+            path = path.replace("\\", "/")
             df = df.append({
-                "path": path + "\\" + f,
+                "path": path + "/" + f,
                 "filename": f,
-                "category": path.split("\\")[-1]},
+                "category": path.split("/")[-1]},
                 ignore_index=True)
     if shuffle:
         df = df.sample(frac=1, random_state=random_state).reset_index(drop=True)
