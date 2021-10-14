@@ -1,6 +1,6 @@
 import tensorflow as tf
 from tensorflow.python.keras import layers
-from tensorflow.python.keras.models import Model
+from tensorflow.python.keras.models import Model, Sequential
 from tensorflow.python.keras.applications import resnet
 from VCWA import ResidualAttentionModule, CBAM
 from VCWA.AttentionModule import AttentionModule
@@ -216,3 +216,27 @@ def create_CBAM_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), classes=CLASSE
 
     top = layers.Dense(classes)(basenet.output)
     return Model(inputs=basenet.inputs, outputs=top)
+
+
+def tiny_cnn(input_shape=(HEIGHT, WIDTH, CHANNELS), classes=CLASSES, additional_batchnorm=False):
+    model = Sequential()
+    model.add(layers.Input(input_shape))
+    model.add(layers.Conv2D(96, 7, 2, activation="relu"))
+    model.add(layers.MaxPooling2D(3, 2))
+    model.add(layers.BatchNormalization())
+    model.add(layers.Conv2D(256, 5, 2, activation="relu"))
+    model.add(layers.MaxPooling2D(3, 2))
+    if additional_batchnorm:
+        model.add(layers.BatchNormalization())
+    model.add(layers.Conv2D(512, 3, 1, activation="relu"))
+    model.add(layers.Conv2D(512, 3, 1, activation="relu"))
+    model.add(layers.Conv2D(512, 3, 1, activation="relu"))
+    model.add(layers.MaxPooling2D(3, 2))
+    model.add(layers.Flatten())
+    model.add(layers.Dense(4096, activation="relu", name="spatial_full6"))
+    model.add(layers.Dropout(0.5))
+    model.add(layers.Dense(2048, activation="relu", name="spatial_full7"))
+    model.add(layers.Dropout(0.5))
+    model.add(layers.Dense(classes, activation="softmax", name="spatial_softmax"))
+    model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
+    return model
