@@ -7,75 +7,76 @@ from VCWA import Common
 class VideoDataGenerator(tf.keras.utils.Sequence):
 
     def __init__(self,
-                 path,
-                 y,
-                 num_classes,
+                 dataframe,
                  target_size,
-                 optflow_path=None,
+                 optflow=False,
                  batch_size=4,
                  preprocessing_function=tf.keras.applications.resnet_v2.preprocess_input,
                  shape_format="video"):
-                 #shear_range = None,
-                 #zoom_range = None,
-                 #horizontal_flip = False
-        self.path = path
-        self.y = y
-        self.num_classes = num_classes
-        self.optflow_path = optflow_path
+        # shear_range = None,
+        # zoom_range = None,
+        # horizontal_flip = False
+        self.dataframe = dataframe[["path", "category"]].copy()
+        self.optflow = optflow
+        if optflow:
+            self.dataframe["optflow_path"] = dataframe.optflow_path
+        self.num_classes = self.dataframe.category.nunique()
         self.batch_size = batch_size
         self.img_datagen = tf.keras.preprocessing.image.ImageDataGenerator()
         self.preprocessing_function = preprocessing_function
         self.target_size = target_size
-        self.n = len(self.path)
+        self.n = len(self.dataframe)
         self.length = self.n // self.batch_size
         assert shape_format in ["video", "images"], "Unexpected argument for shape_format: " + shape_format
         self.shape_format = shape_format
+        self.on_epoch_end()
+
         # TODO: randomize transformation
-        #self.transform_params = {}
-        #if shear_range != None:
+        # self.transform_params = {}
+        # if shear_range != None:
         #    self.transform_params.update({"shear": shear_range})
-        #if zoom_range != None:
+        # if zoom_range != None:
         #    self.transform_params.update({"zx": 1-zoom_range, "zy": 1-zoom_range})
-        #if horizontal_flip != False:
+        # if horizontal_flip != False:
         #    self.transform_params.update({"flip_horizontal": horizontal_flip})
 
     def on_epoch_end(self):
-        # shuffle?
-        pass
+        # shuffle
+        self.dataframe = self.dataframe.sample(frac=1).reset_index(drop=True)
 
     def __getitem__(self, index):
-        X_batch_vid, y_batch = self.get_batch(index)
-        if self.optflow_path is not None:
-            X_batch_optflow = self.get_x_batch_optflow(index)
-            return [X_batch_vid, X_batch_optflow], y_batch
+        x_batch_vid, y_batch = self.get_batch(index)
+        if self.optflow:
+            x_batch_optflow = self.get_x_batch_optflow(index)
+            return [x_batch_vid, x_batch_optflow], y_batch
         else:
-            return X_batch_vid, y_batch
+            return x_batch_vid, y_batch
 
     def get_batch(self, index):
-        X_batch_vid = []
+        x_batch_vid = []
         y_batch = []
         for i in range(index, index + self.batch_size):
             if i == self.n:
                 break
-            x = self.load_and_format_video(self.path[i])
-            X_batch_vid.append(x)
-            y = to_categorical(self.y[i], num_classes=self.num_classes)
+            x = self.load_and_format_video(self.dataframe.path[i])
+            x_batch_vid.append(x)
+            y = to_categorical(self.dataframe.category[i], num_classes=self.num_classes)
             if self.shape_format == "images":
                 y = np.expand_dims(y, axis=0)
                 y = np.repeat(y, x.shape[0], axis=0)
             y_batch.append(y)
         if self.shape_format == "video":
-            X_batch_vid = np.array(X_batch_vid)
+            x_batch_vid = np.array(x_batch_vid)
         if self.shape_format == "images":
-            X_batch_vid = np.vstack(X_batch_vid)
-        return X_batch_vid, np.vstack(y_batch)
+            x_batch_vid = np.vstack(x_batch_vid)
+        return x_batch_vid, np.vstack(y_batch)
 
     def get_x_batch_optflow(self, index):
         X_batch_optflow = []
         for i in range(index, index + self.batch_size):
             if i == self.n:
                 break
-            X_batch_optflow.append(self.load_and_format_video(self.optflow_path[i]))
+            X_batch_optflow.append(self.load_and_format_video(self.dataframe.optflow_path[i]))
         if self.shape_format == "video":
             X_batch_optflow = np.array(X_batch_optflow)
         if self.shape_format == "images":

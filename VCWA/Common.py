@@ -4,12 +4,29 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 import matplotlib.pyplot as plt
-from tensorflow.keras import layers
-from tensorflow.keras import activations
+from tensorflow.keras import layers, activations
+from sklearn import preprocessing
 
 ####################
 # Dataset Handling #
 ####################
+
+
+def get_dataset(path, split_path, optflow_path=None, split_no=1, dataset_type="hmdb51"):
+    assert dataset_type in ["hmdb51"], "Unexpected dataset " + dataset_type
+    dataset = evaluate_dataset(path)
+    if dataset_type == "hmdb51":
+        split_df = get_hmdb51_split(split_path, split_no=split_no)
+        dataset = dataset.merge(split_df, on="filename")
+
+    if optflow_path is not None:
+        optflow_dataset = evaluate_dataset(optflow_path)
+        optflow_dataset["filename"] = optflow_dataset["filename"].str.split(".", expand=True)[0] + ".avi"
+        optflow_dataset.rename(columns={"path": "optflow_path"}, inplace=True)
+        dataset = dataset.merge(optflow_dataset[["optflow_path", "filename"]], on="filename")
+
+    dataset.category = preprocessing.LabelEncoder().fit_transform(dataset.category)
+    return dataset
 
 
 def evaluate_dataset(path="D:/datasets/hmdb51_org", shuffle=False, random_state=42):
@@ -77,7 +94,7 @@ def grayscale_video(video):
     return np.array(grayscaled_video)
 
 
-def get_formatted_video(path, resize_shape=None, grayscale=False, downsampling_frames=None, proprocessing_function=None):
+def get_formatted_video(path, resize_shape=None, grayscale=False, downsampling_frames=None, proprocessing_fn=None):
     video = load_video(path)
     if resize_shape is not None:
         video = resize_video(video, resize_shape)
@@ -86,8 +103,8 @@ def get_formatted_video(path, resize_shape=None, grayscale=False, downsampling_f
     if grayscale:
         video = grayscale_video(video)
         video = video.reshape(video.shape[0:3] + (1,))
-    if proprocessing_function is not None:
-        video = proprocessing_function(video)
+    if proprocessing_fn is not None:
+        video = proprocessing_fn(video)
     return video
 
 
