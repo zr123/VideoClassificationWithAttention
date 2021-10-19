@@ -72,16 +72,16 @@ class VideoDataGenerator(tf.keras.utils.Sequence):
         return x_batch_vid, np.vstack(y_batch)
 
     def get_x_batch_optflow(self, index):
-        X_batch_optflow = []
+        x_batch_optflow = []
         for i in range(index, index + self.batch_size):
             if i == self.n:
                 break
-            X_batch_optflow.append(self.load_and_format_video(self.dataframe.optflow_path[i]))
+            x_batch_optflow.append(self.load_and_format_video(self.dataframe.optflow_path[i]))
         if self.shape_format == "video":
-            X_batch_optflow = np.array(X_batch_optflow)
+            x_batch_optflow = np.array(x_batch_optflow)
         if self.shape_format == "images":
-            X_batch_optflow = np.vstack(X_batch_optflow)
-        return X_batch_optflow
+            x_batch_optflow = np.vstack(x_batch_optflow)
+        return x_batch_optflow
 
     def __len__(self):
         return self.length

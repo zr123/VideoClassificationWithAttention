@@ -28,14 +28,14 @@ class DatasetLoader(tf.keras.utils.Sequence):
         pass
 
     def __getitem__(self, index):
-        X_batch = []
+        x_batch = []
         y_batch = []
         for i in range(index, index + self.batch_size):
             if i == self.n:
                 break
-            X_batch.append(Common.get_formatted_video(self.X[i], self.resize_shape, self.grayscale, self.downsampling_frames, self.proprocessing))
+            x_batch.append(Common.get_formatted_video(self.X[i], self.resize_shape, self.grayscale, self.downsampling_frames, self.proprocessing))
             y_batch.append(self.y[i])
-        return np.array(X_batch), np.vstack(y_batch)
+        return np.array(x_batch), np.vstack(y_batch)
 
     def __len__(self):
         return self.length

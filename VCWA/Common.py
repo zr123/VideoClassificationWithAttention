@@ -150,19 +150,19 @@ def convert_dataset(dataframe,
             save_npz(vid, target_directory + str(row.category) + "/" + row.filename)
 
 
-def convert_optflow_dataset(dataframe, target_directory, save_as="npz", L=10):
+def convert_optflow_dataset(dataframe, target_directory, save_as="npz", stack_size=10):
     assert save_as in ["npz"], "Unrecognized argument for save_as: " + save_as
     for _, row in dataframe.iterrows():
         os.makedirs(target_directory + str(row.category) + "/", exist_ok=True)
         vid = load_video(row.path)
         if save_as == "npz":
-            optflow = calcStackedOpticalFlow(vid, L)
+            optflow = calc_stacked_optical_flow(vid, stack_size)
             optflow = optflow.astype(int)
             save_npz(optflow, target_directory + str(row.category) + "/" + row.filename)
 
 
 # simple dense optflow vector with horizontal and vertical component
-def calcOpticalFlow(frame1, frame2):
+def calc_optical_flow(frame1, frame2):
     assert (frame1.shape == frame2.shape), "Frames must have the same shape."
     # grayscale if necessary
     if frame1.shape[2] == 3:
@@ -173,12 +173,12 @@ def calcOpticalFlow(frame1, frame2):
 
 
 # TODO: wie haben die das in dem Paper gemacht?
-def calcStackedOpticalFlow(video, stack_size_L=10):
+def calc_stacked_optical_flow(video, stack_size=10):
     stack = []
-    for i in range(len(video) - stack_size_L):
+    for i in range(len(video) - stack_size):
         frame = []
-        for l in range(i + 1, i + 1 + stack_size_L):
-            frame.append(calcOpticalFlow(video[i], video[l]))
+        for l in range(i + 1, i + 1 + stack_size):
+            frame.append(calc_optical_flow(video[i], video[l]))
         stack.append(np.dstack(frame))
     return np.array(stack)
 
@@ -247,7 +247,7 @@ def pseudo_softmax2d(x, name):
     x = layers.Flatten()(x)
     # x = (x - min(x)) / sum(x)
     x = layers.Lambda(
-        lambda x: (x - tf.math.reduce_min(x, axis=-1, keepdims=True)) / tf.math.reduce_sum(x, axis=-1, keepdims=True)
+        lambda l: (l - tf.math.reduce_min(l, axis=-1, keepdims=True)) / tf.math.reduce_sum(l, axis=-1, keepdims=True)
     )(x)
     x = layers.Reshape(shape[1:], name=name)(x)
     return x
