@@ -6,11 +6,12 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 from tensorflow.keras import layers, activations
 from sklearn import preprocessing
+from tensorflow.python.keras.models import Model
+
 
 ####################
 # Dataset Handling #
 ####################
-
 
 def get_dataset(path, split_path, optflow_path=None, split_no=1, dataset_type="hmdb51"):
     assert dataset_type in ["hmdb51"], "Unexpected dataset " + dataset_type
@@ -251,3 +252,45 @@ def pseudo_softmax2d(x, name):
     )(x)
     x = layers.Reshape(shape[1:], name=name)(x)
     return x
+
+############
+# Grad-CAM #
+############
+
+def get_gradcam_attention(model_inputs, model, layer_name=None, layer_type=None):
+    '''
+    Adaption of https://keras.io/examples/vision/grad_cam/
+
+    Args:
+        model_inputs: input data, i.e. batch of images
+        model: 2D-CNN Model
+        layer_name: name of the layer the Grad-CAM is to be extracted from
+        layer_type: type of the layer the Grad-CAM is to be extracted from
+
+    Returns:
+
+    '''
+    # collect the observed cnn-layers
+    # TODO by layer_type
+    observed_layer = model.get_layer(layer_name)
+
+    grad_model = Model(inputs=model.inputs, outputs=[model.output, observed_layer.output])
+
+    with tf.GradientTape() as tape:
+        preds, layer_output = grad_model(model_inputs)
+        pred_index = tf.argmax(preds, axis=1)
+        class_channel = []
+        for i in range(len(pred_index)):
+            class_channel.append(preds[i, pred_index[i]])
+
+    gradients = tape.gradient(class_channel, layer_output)
+    mean_gradients = tf.reduce_mean(gradients, axis=(1, 2))
+
+    heatmaps = []
+    for i in range(layer_output.shape[0]):
+        weighted_activation = tf.matmul(layer_output[i], mean_gradients[i][..., tf.newaxis])
+        weighted_activation = tf.squeeze(weighted_activation)
+        weighted_activation = tf.maximum(weighted_activation, 0) / tf.math.reduce_max(weighted_activation)
+        heatmaps.append(weighted_activation.numpy())
+
+    return heatmaps
