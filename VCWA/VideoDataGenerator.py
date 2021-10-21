@@ -2,6 +2,7 @@ import tensorflow as tf
 import numpy as np
 from tensorflow.keras.utils import to_categorical
 from VCWA import Common
+import random
 
 
 class VideoDataGenerator(tf.keras.utils.Sequence):
@@ -12,7 +13,8 @@ class VideoDataGenerator(tf.keras.utils.Sequence):
                  optflow=False,
                  batch_size=4,
                  preprocessing_function=tf.keras.applications.resnet_v2.preprocess_input,
-                 shape_format="video"):
+                 shape_format="video",
+                 single_frame=False):
         # shear_range = None,
         # zoom_range = None,
         # horizontal_flip = False
@@ -29,6 +31,7 @@ class VideoDataGenerator(tf.keras.utils.Sequence):
         self.length = self.n // self.batch_size
         assert shape_format in ["video", "images"], "Unexpected argument for shape_format: " + shape_format
         self.shape_format = shape_format
+        self.single_frame = single_frame
         self.on_epoch_end()
 
         # TODO: randomize transformation
@@ -58,7 +61,7 @@ class VideoDataGenerator(tf.keras.utils.Sequence):
         for i in range(index, index + self.batch_size):
             if i == self.n:
                 break
-            x = self.load_and_format_video(self.dataframe.path[i])
+            x = self.get_x(self.dataframe.path[i])
             x_batch_vid.append(x)
             y = to_categorical(self.dataframe.category[i], num_classes=self.num_classes)
             if self.shape_format == "images":
@@ -71,12 +74,28 @@ class VideoDataGenerator(tf.keras.utils.Sequence):
             x_batch_vid = np.vstack(x_batch_vid)
         return x_batch_vid, np.vstack(y_batch)
 
+    def get_x(self, path):
+        x = self.load_and_format_video(path)
+        if self.single_frame:
+            x = self.get_single_frame(x)
+        return x
+
+    @staticmethod
+    def get_single_frame(x):
+        frame_count = x.shape[0]
+        random_frame = random.randint(0, frame_count - 1)
+        frame = x[random_frame].copy()
+        del x
+        frame = np.expand_dims(frame, axis=0)
+        return frame
+
     def get_x_batch_optflow(self, index):
         x_batch_optflow = []
         for i in range(index, index + self.batch_size):
             if i == self.n:
                 break
-            x_batch_optflow.append(self.load_and_format_video(self.dataframe.optflow_path[i]))
+            x = self.get_x(self.dataframe.optflow_path[i])
+            x_batch_optflow.append(x)
         if self.shape_format == "video":
             x_batch_optflow = np.array(x_batch_optflow)
         if self.shape_format == "images":

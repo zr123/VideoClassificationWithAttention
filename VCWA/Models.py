@@ -192,19 +192,19 @@ def recreate_top_fn(model, classes):
     return Model(inputs=inputs, outputs=outputs)
 
 
-def get_twostream_attention(input, model, cmap='inferno'):
+def get_twostream_attention(inputs, model, cmap='inferno'):
     input1, input2, td1, td2 = model.layers[0:4]
     layer_extractor_model = AttentionModels.get_attention_extractor(td1.layer)
 
-    _, a1, a2, a3 = layer_extractor_model.predict(input)
+    _, a1, a2, a3 = layer_extractor_model.predict(inputs)
     images = []
-    for i in range(input.shape[0]):
+    for i in range(inputs.shape[0]):
         overlay = Common.combine_attention([a1[i], a2[i], a3[i]])
-        combined_image = Common.overlay_attention(input[i], overlay, cmap=cmap)
+        combined_image = Common.overlay_attention(inputs[i], overlay, cmap=cmap)
         images.append(combined_image)
     return images
 
 
-def attention_to_gif(images, path, fps=7):
+def attention_to_gif(images, path="./attention.gif", fps=7):
     images = (np.array(images)*255).astype(np.uint8)
     imageio.mimsave(path, images, fps=fps)
