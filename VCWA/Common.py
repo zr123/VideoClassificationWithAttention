@@ -14,10 +14,13 @@ from tensorflow.python.keras.models import Model
 ####################
 
 def get_dataset(path, split_path, optflow_path=None, split_no=1, dataset_type="hmdb51"):
-    assert dataset_type in ["hmdb51"], "Unexpected dataset " + dataset_type
+    assert dataset_type in ["hmdb51", "ucf101"], "Unexpected dataset " + dataset_type
     dataset = evaluate_dataset(path)
     if dataset_type == "hmdb51":
         split_df = get_hmdb51_split(split_path, split_no=split_no)
+        dataset = dataset.merge(split_df, on="filename")
+    if dataset_type == "ucf101":
+        split_df = get_ucf101_split(split_path, split_no=split_no)
         dataset = dataset.merge(split_df, on="filename")
 
     if optflow_path is not None:
@@ -58,6 +61,17 @@ def get_hmdb51_split(path="D:/datasets/hmdb51_org_splits", split_no=1):
                 for line in lines:
                     filename, split = line.split()
                     split_df.loc[len(split_df)] = (filename, int(split))
+    return split_df
+
+
+def get_ucf101_split(path="D:/datasets/ucfTrainTestlist", split_no=1):
+    file = open(path + "/trainlist0" + str(split_no) + ".txt")
+    split_df = pd.DataFrame(columns=["filename", "split"])
+    for line in file.readlines():
+        filename, split = line.rstrip().split()
+        _, filename = filename.split("/")
+        split_df = split_df.append({"filename": filename, "split": split}, ignore_index=True)
+    file.close()
     return split_df
 
 
