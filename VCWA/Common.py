@@ -293,4 +293,4 @@ def get_gradcam_attention(model_inputs, model, layer_name=None, layer_type=None)
         weighted_activation = tf.maximum(weighted_activation, 0) / tf.math.reduce_max(weighted_activation)
         heatmaps.append(weighted_activation.numpy())
 
-    return heatmaps
+    return np.array(heatmaps)
