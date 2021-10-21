@@ -192,6 +192,7 @@ def recreate_top_fn(model, classes):
     return Model(inputs=inputs, outputs=outputs)
 
 
+# TODO refactor for non-3 number of attention layers
 def get_twostream_attention(inputs, model, cmap='inferno'):
     input1, input2, td1, td2 = model.layers[0:4]
     layer_extractor_model = AttentionModels.get_attention_extractor(td1.layer)
@@ -200,6 +201,18 @@ def get_twostream_attention(inputs, model, cmap='inferno'):
     images = []
     for i in range(inputs.shape[0]):
         overlay = Common.combine_attention([a1[i], a2[i], a3[i]])
+        combined_image = Common.overlay_attention(inputs[i], overlay, cmap=cmap)
+        images.append(combined_image)
+    return images
+
+
+def get_twostream_gradcam(inputs, model, layer_name, cmap='inferno'):
+    input1, input2, td1, td2 = model.layers[0:4]
+    attention = Common.get_gradcam_attention(inputs, td1.layer, layer_name=layer_name)
+
+    images = []
+    for i in range(inputs.shape[0]):
+        overlay = Common.combine_attention([attention[i]])
         combined_image = Common.overlay_attention(inputs[i], overlay, cmap=cmap)
         images.append(combined_image)
     return images

@@ -13,8 +13,9 @@ from tensorflow.python.keras.models import Model
 # Dataset Handling #
 ####################
 
-def get_dataset(path, split_path, optflow_path=None, split_no=1, dataset_type="hmdb51"):
-    assert dataset_type in ["hmdb51", "ucf101"], "Unexpected dataset " + dataset_type
+def get_dataset(path, split_path, optflow_path=None, split_no=1, dataset_type=None):
+    accepted_datasets = ["hmdb51", "ucf101"]
+    assert dataset_type in accepted_datasets, "Unexpected dataset " + dataset_type + " not in " + accepted_datasets
     dataset = evaluate_dataset(path)
     if dataset_type == "hmdb51":
         split_df = get_hmdb51_split(split_path, split_no=split_no)

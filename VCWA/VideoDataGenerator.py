@@ -58,7 +58,7 @@ class VideoDataGenerator(tf.keras.utils.Sequence):
     def get_batch(self, index):
         x_batch_vid = []
         y_batch = []
-        for i in range(index, index + self.batch_size):
+        for i in range(index * self.batch_size, self.batch_size*index + self.batch_size):
             if i == self.n:
                 break
             x = self.get_x(self.dataframe.path[i])
