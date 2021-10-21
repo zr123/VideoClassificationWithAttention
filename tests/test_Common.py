@@ -31,16 +31,16 @@ def test_get_hmdb51_split(split_no):
     assert df.size == 13532
 
 
-@pytest.mark.parametrize("split_no", [1, 2, 3])
-def test_get_ucf101_split(split_no):
+@pytest.mark.parametrize("split_no, split_size", [(1, 19074), (2, 19172), (3, 19248)])
+def test_get_ucf101_split(split_no, split_size):
     df = Common.get_ucf101_split("./tests/data/ucfTrainTestlist", split_no=split_no)
-    assert df.size == 19074
+    assert df.size == split_size
 
 
-# test extracting Grad-CAM attention from ResNet50
+# test extracting Grad-CAM attention from ResNet50v2
 def test_get_gradcam_attention():
     test_datagen = tf.keras.preprocessing.image.ImageDataGenerator(
-        preprocessing_function=tf.keras.applications.resnet_v2.preprocess_input)  # rescale=1./255)
+        preprocessing_function=tf.keras.applications.resnet_v2.preprocess_input)
     test_generator = test_datagen.flow_from_directory(
         './tests/data/dummy_imagenette',
         target_size=(224, 224),
