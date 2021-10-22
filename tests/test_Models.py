@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 import tensorflow as tf
 import numpy as np
@@ -110,3 +112,9 @@ def test_get_twostream_attention_with_input():
     dummy_vid = np.zeros((1, 20, 224, 224, 3))
     attention = Models.get_twostream_attention(dummy_vid[0], two_stream_model)
     assert attention.shape == (20, 224, 448, 3)
+
+
+def test_video_to_gif():
+    dummy_vid = np.zeros((20, 224, 224, 3))
+    Models.video_to_gif(dummy_vid, "./tests/data/attention.gif")
+    assert Path("./tests/data/attention.gif").exists

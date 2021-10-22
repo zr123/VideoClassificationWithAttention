@@ -222,6 +222,6 @@ def get_twostream_gradcam(inputs, model, layer_name, cmap='inferno'):
     return images
 
 
-def attention_to_gif(images, path="./attention.gif", fps=7):
+def video_to_gif(images, path="./attention.gif", fps=7):
     images = (np.array(images)*255).astype(np.uint8)
     imageio.mimsave(path, images, fps=fps)
