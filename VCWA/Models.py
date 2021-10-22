@@ -192,15 +192,19 @@ def recreate_top_fn(model, classes):
     return Model(inputs=inputs, outputs=outputs)
 
 
-# TODO refactor for non-3 number of attention layers
 def get_twostream_attention(inputs, model, include_input=True, cmap='inferno'):
     input1, input2, td1, td2 = model.layers[0:4]
     layer_extractor_model = AttentionModels.get_attention_extractor(td1.layer)
 
-    _, a1, a2, a3 = layer_extractor_model.predict(inputs)
+    prediction = layer_extractor_model.predict(inputs)
     images = []
     for i in range(inputs.shape[0]):
-        overlay = Common.combine_attention([a1[i], a2[i], a3[i]])
+        attention = []
+        # prediction[0] is the class-score output of the network
+        for a in prediction[1:]:
+            attention.append(a[i])
+
+        overlay = Common.combine_attention(attention)
         combined_image = Common.overlay_attention(inputs[i], overlay, cmap=cmap)
 
         if include_input:

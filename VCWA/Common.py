@@ -188,7 +188,6 @@ def calc_optical_flow(frame1, frame2):
     return flow
 
 
-# TODO: wie haben die das in dem Paper gemacht?
 def calc_stacked_optical_flow(video, stack_size=10):
     stack = []
     for i in range(len(video) - stack_size):
