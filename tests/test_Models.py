@@ -88,3 +88,25 @@ def test_create_ResidualAttention_ResNet50v2(classes):
 def test_create_CBAM_ResNet50v2(classes):
     model = AttentionModels.create_CBAM_ResNet50v2((224, 224, 3), classes=classes)
     tf.debugging.assert_shapes([(model.output, (None, classes))])
+
+
+#####################
+# Utility-functions #
+#####################
+
+def test_get_twostream_attention():
+    vid_model = AttentionModels.create_ResidualAttention_ResNet50v2((224, 224, 3), classes=51)
+    optflow_model = AttentionModels.create_ResidualAttention_ResNet50v2((224, 224, 3), classes=51)
+    two_stream_model = Models.assemble_TwoStreamModel(vid_model, optflow_model, 51, fusion="average", recreate_top=True)
+    dummy_vid = np.zeros((1, 20, 224, 224, 3))
+    attention = Models.get_twostream_attention(dummy_vid[0], two_stream_model, include_input=False)
+    assert attention.shape == (20, 224, 224, 3)
+
+
+def test_get_twostream_attention_with_input():
+    vid_model = AttentionModels.create_ResidualAttention_ResNet50v2((224, 224, 3), classes=51)
+    optflow_model = AttentionModels.create_ResidualAttention_ResNet50v2((224, 224, 3), classes=51)
+    two_stream_model = Models.assemble_TwoStreamModel(vid_model, optflow_model, 51, fusion="average", recreate_top=True)
+    dummy_vid = np.zeros((1, 20, 224, 224, 3))
+    attention = Models.get_twostream_attention(dummy_vid[0], two_stream_model)
+    assert attention.shape == (20, 224, 448, 3)

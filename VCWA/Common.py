@@ -232,13 +232,15 @@ def overlay_attention(image, overlay, rescale_image=True, cmap='inferno'):
     if rescale_image:
         image = image/2 + 0.5
     # rescale to [0, 1]
-    overlay = overlay / overlay.max()
+    if overlay.max() != 0:
+        overlay = overlay / overlay.max()
     # grayscale to rgba heatmap
     colormap = plt.get_cmap(cmap)
     heatmap = colormap(overlay)
     # slice the alpha channel: rgba -> rgb
     heatmap = heatmap[:, :, :3]
-    # from float64 to float 32
+    # from float64 to float 32 / safeguard types
+    image = image.astype("float32")
     heatmap = heatmap.astype("float32")
 
     combined_image = cv2.addWeighted(image, 0.3, heatmap, 0.7, 0)
