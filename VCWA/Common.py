@@ -155,6 +155,7 @@ def convert_dataset(dataframe,
                     proprocessing_function=None,
                     save_as="video"):
     assert save_as in ["video", "images", "npz"], "Unrecognized argument for save_as: " + save_as
+    target_directory = target_directory.rstrip("/\\") + "/"
     for _, row in dataframe.iterrows():
         os.makedirs(target_directory + str(row.category) + "/", exist_ok=True)
         vid = get_formatted_video(row.path, resize_shape, grayscale, downsampling_frames, proprocessing_function)
