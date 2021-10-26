@@ -168,6 +168,7 @@ def convert_dataset(dataframe,
 
 
 def convert_optflow_dataset(dataframe, target_directory, save_as="npz", stack_size=10):
+    target_directory = target_directory.rstrip("/\\") + "/"
     assert save_as in ["npz"], "Unrecognized argument for save_as: " + save_as
     for _, row in dataframe.iterrows():
         os.makedirs(target_directory + str(row.category) + "/", exist_ok=True)

@@ -7,8 +7,8 @@ from VCWA.AttentionModule import AttentionModule
 from VCWA.AttentionGate import AttentionGate
 
 
-HEIGHT = 128
-WIDTH = 128
+HEIGHT = 224
+WIDTH = 224
 CHANNELS = 3
 CLASSES = 51
 
