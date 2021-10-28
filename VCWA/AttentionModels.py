@@ -176,8 +176,9 @@ def create_ResidualAttention_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), c
         classifier_activation="softmax")
 
     top = layers.Dense(classes)(basenet.output)
-    return Model(inputs=basenet.inputs, outputs=top, name="ResAttentionNet50v2")
-
+    model = Model(inputs=basenet.inputs, outputs=top, name="ResAttentionNet50v2")
+    model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
+    return model
 
 
 def create_CBAM_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), classes=CLASSES, weights=None):
@@ -212,7 +213,9 @@ def create_CBAM_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), classes=CLASSE
         classifier_activation="softmax")
 
     top = layers.Dense(classes)(basenet.output)
-    return Model(inputs=basenet.inputs, outputs=top, name="CBAM_Resnet50v2")
+    model = Model(inputs=basenet.inputs, outputs=top, name="CBAM_Resnet50v2")
+    model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
+    return model
 
 
 def tiny_cnn(input_shape=(HEIGHT, WIDTH, CHANNELS), classes=CLASSES, additional_batchnorm=False):
