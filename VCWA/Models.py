@@ -173,7 +173,7 @@ def assemble_TwoStreamModel(spatial_stream_model, temporal_stream_model, classes
         spatial_stream = layers.TimeDistributed(spatial_stream_model)(spatial_stream_input)
         temporal_stream = layers.TimeDistributed(temporal_stream_model)(temporal_stream_input)
 
-    # late fusion
+    # late fusion TODO implement dense fusion and SVM fusion
     if fusion == "average":
         fusion = layers.Concatenate(axis=1)([spatial_stream, temporal_stream])
         fusion = tf.math.reduce_mean(fusion, axis=1)
@@ -214,7 +214,7 @@ def get_twostream_attention(inputs, model, include_input=True, cmap='inferno'):
     return np.array(images)
 
 
-def get_twostream_gradcam(inputs, model, layer_name, cmap='inferno'):
+def get_twostream_gradcam(inputs, model, layer_name, include_input=True, cmap='inferno'):
     input1, input2, td1, td2 = model.layers[0:4]
     attention = Common.get_gradcam_attention(inputs, td1.layer, layer_name=layer_name)
 
@@ -222,6 +222,10 @@ def get_twostream_gradcam(inputs, model, layer_name, cmap='inferno'):
     for i in range(inputs.shape[0]):
         overlay = Common.combine_attention([attention[i]])
         combined_image = Common.overlay_attention(inputs[i], overlay, cmap=cmap)
+
+        if include_input:
+            combined_image = np.concatenate((inputs[i] / 2 + 0.5, combined_image), axis=1)
+
         images.append(combined_image)
     return images
 

@@ -10,14 +10,15 @@ class VideoDataGenerator(tf.keras.utils.Sequence):
     def __init__(self,
                  dataframe,
                  target_size,
+                 preprocessing_function,  # tf.keras.applications.resnet_v2.preprocess_input,
                  optflow=False,
                  batch_size=4,
-                 preprocessing_function=tf.keras.applications.resnet_v2.preprocess_input,
                  shape_format="video",
-                 single_frame=False):
-        # shear_range = None,
-        # zoom_range = None,
-        # horizontal_flip = False
+                 single_frame=False,
+                 rotation_range=None,
+                 shear_range=None,
+                 zoom_range=None,
+                 horizontal_flip=False):
         self.dataframe = dataframe[["path", "category"]].copy()
         self.optflow = optflow
         if optflow:
@@ -32,16 +33,11 @@ class VideoDataGenerator(tf.keras.utils.Sequence):
         assert shape_format in ["video", "images"], "Unexpected argument for shape_format: " + shape_format
         self.shape_format = shape_format
         self.single_frame = single_frame
+        self.rotation_range = rotation_range
+        self.shear_range = shear_range
+        self.zoom_range = zoom_range
+        self.horizontal_flip = horizontal_flip
         self.on_epoch_end()
-
-        # TODO: randomize transformation
-        # self.transform_params = {}
-        # if shear_range != None:
-        #    self.transform_params.update({"shear": shear_range})
-        # if zoom_range != None:
-        #    self.transform_params.update({"zx": 1-zoom_range, "zy": 1-zoom_range})
-        # if horizontal_flip != False:
-        #    self.transform_params.update({"flip_horizontal": horizontal_flip})
 
     def on_epoch_end(self):
         # shuffle
@@ -58,7 +54,7 @@ class VideoDataGenerator(tf.keras.utils.Sequence):
     def get_batch(self, index):
         x_batch_vid = []
         y_batch = []
-        for i in range(index * self.batch_size, self.batch_size*index + self.batch_size):
+        for i in range(index * self.batch_size, self.batch_size * index + self.batch_size):
             if i == self.n:
                 break
             x = self.get_x(self.dataframe.path[i])
@@ -120,9 +116,26 @@ class VideoDataGenerator(tf.keras.utils.Sequence):
             formatted_vid.append(frame)
         return np.array(formatted_vid)
 
+    def get_random_transform_params(self):
+        theta, shear = 0, 0
+        zx, zy = 1, 1
+        if self.rotation_range is not None:
+            theta = np.random.uniform(-self.rotation_range, self.rotation_range)
+        if self.shear_range is not None:
+            shear = np.random.uniform(-self.shear_range, self.shear_range)
+        if self.zoom_range is not None:
+            zx, zy = np.random.uniform(1-self.zoom_range, 1.0, 2)
+        flip_horizontal = (np.random.random() < 0.5) * self.horizontal_flip
+        transform_params = {'theta': theta,
+                            'shear': shear,
+                            'zx': zx,
+                            'zy': zy,
+                            'flip_horizontal': flip_horizontal}
+        return transform_params
+
     def format_frame(self, frame):
-        # TODO: randomize transform params
-        # frame = self.img_datagen.apply_transform(frame, self.transform_params)
+        transform_params = self.get_random_transform_params()
+        frame = self.img_datagen.apply_transform(frame, transform_params)
         frame = tf.keras.preprocessing.image.smart_resize(frame, self.target_size)
         if self.preprocessing_function is not None:
             frame = self.preprocessing_function(frame)

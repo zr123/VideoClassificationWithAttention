@@ -26,7 +26,6 @@ def create_L2PA_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), classes=CLASSE
             local3 = layer
 
     global_features = layers.GlobalAveragePooling2D()(basenet.output)
-    #global_features = basenet.layers[-2]
 
     attention1 = AttentionModule()([local1.output, global_features])
     attention2 = AttentionModule()([local2.output, global_features])
@@ -41,7 +40,7 @@ def create_L2PA_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), classes=CLASSE
     model_output = layers.Dropout(0.5)(model_output)
     model_output = tf.keras.layers.Dense(classes, activation="softmax")(model_output)
 
-    train_model = Model(inputs=input_layer, outputs=model_output)
+    train_model = Model(inputs=input_layer, outputs=model_output, name="L2PA_ResNet50v2")
     train_model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
 
     return train_model
@@ -74,12 +73,10 @@ def create_AttentionGated_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), clas
             local3 = layer
 
     global_features = layers.GlobalAveragePooling2D()(basenet.output)
-    #global_features = basenet.layers[-2]
 
     a1 = AttentionGate(64)([local1.output, global_features])
     a2 = AttentionGate(64)([local2.output, global_features])
     a3 = AttentionGate(64)([local3.output, global_features])
-
 
     attended_features1 = layers.Multiply()([local1.output, a1])
     attended_features1 = layers.GlobalAveragePooling2D()(attended_features1)
@@ -100,7 +97,7 @@ def create_AttentionGated_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), clas
 
     final = layers.Average()([attended_features1, attended_features2, attended_features3, top])
 
-    model = tf.keras.models.Model(inputs=input_layer, outputs=final)
+    model = tf.keras.models.Model(inputs=input_layer, outputs=final, name="AttGated_ResNet50v2")
     model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
 
     return model
@@ -144,7 +141,7 @@ def create_AttentionGatedGrid_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), 
 
     final = layers.Average()([attended_features1, attended_features2, attended_features3, top])
 
-    model = tf.keras.models.Model(inputs=input_layer, outputs=final)
+    model = tf.keras.models.Model(inputs=input_layer, outputs=final, name="AttGatedGrid_ResNet50v2")
     model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
 
     return model
@@ -170,7 +167,7 @@ def create_ResidualAttention_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), c
         stack_fn,
         True,
         True,
-        'attention_resnet50v2',
+        'ResAttentionNet50v2',
         include_top=False,
         weights=weights,
         input_tensor=None,
@@ -179,7 +176,7 @@ def create_ResidualAttention_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), c
         classifier_activation="softmax")
 
     top = layers.Dense(classes)(basenet.output)
-    return Model(inputs=basenet.inputs, outputs=top)
+    return Model(inputs=basenet.inputs, outputs=top, name="ResAttentionNet50v2")
 
 
 
@@ -206,7 +203,7 @@ def create_CBAM_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), classes=CLASSE
         stack_fn,
         True,
         True,
-        'attention_resnet50v2',
+        'CBAM_Resnet50v2',
         include_top=False,
         weights=weights,
         input_tensor=None,
@@ -215,7 +212,7 @@ def create_CBAM_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), classes=CLASSE
         classifier_activation="softmax")
 
     top = layers.Dense(classes)(basenet.output)
-    return Model(inputs=basenet.inputs, outputs=top)
+    return Model(inputs=basenet.inputs, outputs=top, name="CBAM_Resnet50v2")
 
 
 def tiny_cnn(input_shape=(HEIGHT, WIDTH, CHANNELS), classes=CLASSES, additional_batchnorm=False):
