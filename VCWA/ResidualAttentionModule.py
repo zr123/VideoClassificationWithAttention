@@ -5,8 +5,16 @@ from tensorflow.python.keras.applications import resnet
 from VCWA import Common
 
 
-def create_residual_attention_module(x, filters, p=1, t=2, r=1, residual_block_fn=resnet.block2, shortcuts=0,
-                                     name=None, attention_function="sigmoid"):
+def create_residual_attention_module(
+        x,
+        filters,
+        p=1,
+        t=2,
+        r=1,
+        residual_block_fn=resnet.block2,
+        shortcuts=0,
+        name=None,
+        attention_function="sigmoid"):
     """Residual attention module from Residual Attention Network for Image Classification by Wang et al.
 
         Arguments:
@@ -18,21 +26,19 @@ def create_residual_attention_module(x, filters, p=1, t=2, r=1, residual_block_f
             residual_block_fn: helper function to construct a residual block.
             shortcuts: number of inner shortcuts in the mask branch
             name: name of the block
+            attention_function: the function used to calculate mask, may be softmax, sigmoid or pseudo-softmax
     """
     assert attention_function in ["softmax", "sigmoid", "pseudo-softmax"], "Unexpected attention_function argument."
     # p: pre-processing
     for i in range(p):
         x = residual_block_fn(x, filters, name=name + "_preblock" + str(i))
     # t: trunk branch
-    trunk = x
     for i in range(t):
-        trunk = residual_block_fn(trunk, filters, name=name + "_trunkblock" + str(i))
+        trunk = residual_block_fn(x, filters, name=name + "_trunkblock" + str(i))
     # mask branch
-    mask = x
-    mask = create_mask_branch(mask, filters, r, residual_block_fn, shortcuts, name, attention_function)
+    mask = create_mask_branch(x, filters, r, residual_block_fn, shortcuts, name, attention_function)
     # fusion
-    x = layers.Multiply()([trunk, mask])
-    x = layers.Add()([x, trunk])
+    x = layers.Add()([trunk, layers.Multiply()([trunk, mask])])
     # p: post-processing
     for i in range(p):
         x = residual_block_fn(x, filters, name=name + "_postblock" + str(i))

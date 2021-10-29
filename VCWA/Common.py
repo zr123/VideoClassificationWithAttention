@@ -281,7 +281,7 @@ def display_lime_batch(model, generator, hide_rest=False):
     explainer = lime_image.LimeImageExplainer()
     for i in range(x.shape[0]):
         explanation = explainer.explain_instance(
-            x[i].astype('double'), 
+            x[i].astype('double'),
             model.predict, top_labels=5,
             hide_color=0,
             num_samples=1000)

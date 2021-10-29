@@ -104,7 +104,11 @@ def create_AttentionGated_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), clas
 
 
 def create_AttentionGatedGrid_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), classes=CLASSES, weights=None):
-    basenet = tf.keras.applications.ResNet50V2(input_shape=input_shape, classes=classes, include_top=False, weights=weights)
+    basenet = tf.keras.applications.ResNet50V2(
+        input_shape=input_shape,
+        classes=classes,
+        include_top=False,
+        weights=weights)
     input_layer = basenet.input
 
     for layer in basenet.layers:
@@ -147,13 +151,18 @@ def create_AttentionGatedGrid_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), 
     return model
 
 
-def create_ResidualAttention_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), classes=CLASSES, weights=None):
+def create_ResidualAttention_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), classes=CLASSES):
     def ResidualAttention_stack(x, filters, blocks, shortcuts, stride1=2, name=None):
         x = resnet.block2(x, filters, conv_shortcut=True, name=name + '_block1')
         for i in range(2, blocks):
             x = resnet.block2(x, filters, name=name + '_block' + str(i))
         # residual attention module inserted here
-        x = ResidualAttentionModule.create_residual_attention_module(x, filters, shortcuts=shortcuts, name=name + "_attn", attention_function="pseudo-softmax")
+        x = ResidualAttentionModule.create_residual_attention_module(
+            x,
+            filters,
+            shortcuts=shortcuts,
+            name=name + "_attn",
+            attention_function="sigmoid")
         x = resnet.block2(x, filters, stride=stride1, name=name + '_block' + str(blocks))
         return x
 
@@ -163,25 +172,19 @@ def create_ResidualAttention_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), c
         x = ResidualAttention_stack(x, 256, 6, shortcuts=0, name='conv4')
         return resnet.stack2(x, 512, 3, stride1=1, name='conv5')
 
-    basenet = resnet.ResNet(
+    model = resnet.ResNet(
         stack_fn,
         True,
         True,
-        'ResAttentionNet50v2',
-        include_top=False,
-        weights=weights,
-        input_tensor=None,
+        'attention_resnet50v2',
+        weights=None,
         input_shape=input_shape,
-        pooling='avg',
-        classifier_activation="softmax")
-
-    top = layers.Dense(classes)(basenet.output)
-    model = Model(inputs=basenet.inputs, outputs=top, name="ResAttentionNet50v2")
+        classes=classes)
     model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
     return model
 
 
-def create_CBAM_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), classes=CLASSES, weights=None):
+def create_CBAM_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), classes=CLASSES):
     def CBAM_stack(x, filters, blocks, stride1=2, name=None):
         x = resnet.block2(x, filters, conv_shortcut=True, name=name + '_block1')
         for i in range(2, blocks):
@@ -189,7 +192,7 @@ def create_CBAM_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), classes=CLASSE
 
         # CBAM module inserted here
         f_dashdash = CBAM.create_residual_attention_module(x)
-        layers.Add()([x, f_dashdash])
+        x = layers.Add()([x, f_dashdash])
 
         x = resnet.block2(x, filters, stride=stride1, name=name + '_block' + str(blocks))
         return x
@@ -200,20 +203,14 @@ def create_CBAM_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), classes=CLASSE
         x = CBAM_stack(x, 256, 6, name='conv4')
         return resnet.stack2(x, 512, 3, stride1=1, name='conv5')
 
-    basenet = resnet.ResNet(
+    model = resnet.ResNet(
         stack_fn,
         True,
         True,
         'CBAM_Resnet50v2',
-        include_top=False,
-        weights=weights,
-        input_tensor=None,
+        weights=None,
         input_shape=input_shape,
-        pooling='avg',
-        classifier_activation="softmax")
-
-    top = layers.Dense(classes)(basenet.output)
-    model = Model(inputs=basenet.inputs, outputs=top, name="CBAM_Resnet50v2")
+        classes=classes)
     model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
     return model
 
