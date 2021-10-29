@@ -176,7 +176,7 @@ def create_ResidualAttention_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), c
         stack_fn,
         True,
         True,
-        'attention_resnet50v2',
+        'ResAttentionNet50v2',
         weights=None,
         input_shape=input_shape,
         classes=classes)
