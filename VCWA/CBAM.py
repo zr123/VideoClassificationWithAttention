@@ -3,7 +3,7 @@ from tensorflow.keras import layers, activations
 from tensorflow.keras.models import Sequential
 
 
-def create_residual_attention_module(x, r=16.0, k=7):
+def create_cbam_module(x, r=16.0, k=7):
     """CBAM: Convolutional Block Attention Module by Woo et al.
 
         Arguments:

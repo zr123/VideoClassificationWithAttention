@@ -254,30 +254,26 @@ def overlay_attention(image, overlay, rescale_image=True, cmap='inferno'):
     return combined_image
 
 
-def display_attention_batch(model, generator, use_attention=False, CAM_layer=None, cmap='inferno'):
-    x, y = next(generator)
-
+def display_attention_batch(model, x, use_attention=False, CAM_layer=None, cmap='inferno'):
     attention = []
     if use_attention:
         extractor = AttentionModels.get_attention_extractor(model)
         att_list = extractor(x)
-        attention = attention + att_list[1:]  # [a1[i], a2[i], a3[i]]
+        attention = attention + att_list[1:]
     if CAM_layer is not None:
-        cbam_attention = get_gradcam_attention(x, model, "conv5_block3_3_conv")
-        attention = attention + [cbam_attention]  # [cbam_attention[i]]
+        cbam_attention = get_gradcam_attention(x, model, CAM_layer)
+        attention = attention + [cbam_attention]
 
     for i in range(x.shape[0]):
         attention_slice = []
         for a in attention:
             attention_slice.append(a[i])
-
         overlay = combine_attention(attention_slice)
         combined_image = overlay_attention(x[i], overlay, cmap=cmap)
         display_attention_maps(x[i], [combined_image] + attention_slice, cmap=cmap)
 
 
-def display_lime_batch(model, generator, hide_rest=False):
-    x, y = next(generator)
+def display_lime_batch(model, x, hide_rest=False):
     explainer = lime_image.LimeImageExplainer()
     for i in range(x.shape[0]):
         explanation = explainer.explain_instance(

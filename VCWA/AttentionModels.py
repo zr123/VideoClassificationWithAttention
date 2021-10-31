@@ -13,7 +13,26 @@ CHANNELS = 3
 CLASSES = 51
 
 
-def create_L2PA_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), classes=CLASSES, weights=None):
+# get the helper-model to extract the attention information
+def get_attention_extractor(model):
+    attention = []
+    for layer in model.layers:
+        if "AttentionModule" in str(type(layer)):
+            attention.append(layer.output)
+        if "AttentionGate" in str(type(layer)):
+            attention.append(layer.output)
+        if "_ResidualAttention" in layer.name:
+            attention.append(tf.math.reduce_mean(layer.output, axis=-1))
+
+    attention_extractor_model = Model(inputs=model.input, outputs=[model.output] + attention)
+    return attention_extractor_model
+
+
+def create_L2PA_ResNet50v2(
+        input_shape=(HEIGHT, WIDTH, CHANNELS),
+        classes=CLASSES,
+        name="L2PA_ResNet50v2",
+        weights=None):
     basenet = tf.keras.applications.ResNet50V2(input_shape=input_shape, classes=classes, include_top=False, weights=weights)
     input_layer = basenet.input
 
@@ -40,27 +59,17 @@ def create_L2PA_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), classes=CLASSE
     model_output = layers.Dropout(0.5)(model_output)
     model_output = tf.keras.layers.Dense(classes, activation="softmax")(model_output)
 
-    train_model = Model(inputs=input_layer, outputs=model_output, name="L2PA_ResNet50v2")
+    train_model = Model(inputs=input_layer, outputs=model_output, name=name)
     train_model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
 
     return train_model
 
-# get the helper-model to extract the attention information
-def get_attention_extractor(model):
-    attention = []
-    for layer in model.layers:
-        if "AttentionModule" in str(type(layer)):
-            attention.append(layer.output)
-        if "AttentionGate" in str(type(layer)):
-            attention.append(layer.output)
-        if "_ResidualAttention" in layer.name:
-            attention.append(tf.math.reduce_mean(layer.output, axis=-1))
 
-    attention_extractor_model = Model(inputs=model.input, outputs=[model.output] + attention)
-    return attention_extractor_model
-
-
-def create_AttentionGated_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), classes=CLASSES, weights=None):
+def create_AttentionGated_ResNet50v2(
+        input_shape=(HEIGHT, WIDTH, CHANNELS),
+        classes=CLASSES,
+        name="AttGated_ResNet50v2",
+        weights=None):
     basenet = tf.keras.applications.ResNet50V2(input_shape=input_shape, classes=classes, include_top=False, weights=weights)
     input_layer = basenet.input
 
@@ -97,13 +106,16 @@ def create_AttentionGated_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), clas
 
     final = layers.Average()([attended_features1, attended_features2, attended_features3, top])
 
-    model = tf.keras.models.Model(inputs=input_layer, outputs=final, name="AttGated_ResNet50v2")
+    model = tf.keras.models.Model(inputs=input_layer, outputs=final, name=name)
     model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
-
     return model
 
 
-def create_AttentionGatedGrid_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), classes=CLASSES, weights=None):
+def create_AttentionGatedGrid_ResNet50v2(
+        input_shape=(HEIGHT, WIDTH, CHANNELS),
+        classes=CLASSES,
+        name="AttGatedGrid_ResNet50v2",
+        weights=None):
     basenet = tf.keras.applications.ResNet50V2(
         input_shape=input_shape,
         classes=classes,
@@ -145,13 +157,18 @@ def create_AttentionGatedGrid_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), 
 
     final = layers.Average()([attended_features1, attended_features2, attended_features3, top])
 
-    model = tf.keras.models.Model(inputs=input_layer, outputs=final, name="AttGatedGrid_ResNet50v2")
+    model = tf.keras.models.Model(inputs=input_layer, outputs=final, name=name)
     model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
-
     return model
 
 
-def create_ResidualAttention_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), classes=CLASSES):
+def create_ResidualAttention_ResNet50v2(
+        input_shape=(HEIGHT, WIDTH, CHANNELS),
+        classes=CLASSES,
+        name='ResAttentionNet50v2',
+        p=0,
+        t=2,
+        r=1):
     def ResidualAttention_stack(x, filters, blocks, shortcuts, stride1=2, name=None):
         x = resnet.block2(x, filters, conv_shortcut=True, name=name + '_block1')
         for i in range(2, blocks):
@@ -162,7 +179,10 @@ def create_ResidualAttention_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), c
             filters,
             shortcuts=shortcuts,
             name=name + "_attn",
-            attention_function="sigmoid")
+            attention_function="sigmoid",
+            p=p,
+            t=t,
+            r=r)
         x = resnet.block2(x, filters, stride=stride1, name=name + '_block' + str(blocks))
         return x
 
@@ -176,7 +196,7 @@ def create_ResidualAttention_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), c
         stack_fn,
         True,
         True,
-        'ResAttentionNet50v2',
+        model_name=name,
         weights=None,
         input_shape=input_shape,
         classes=classes)
@@ -184,16 +204,14 @@ def create_ResidualAttention_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), c
     return model
 
 
-def create_CBAM_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), classes=CLASSES):
+def create_CBAM_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), classes=CLASSES, name='CBAM_Resnet50v2'):
     def CBAM_stack(x, filters, blocks, stride1=2, name=None):
         x = resnet.block2(x, filters, conv_shortcut=True, name=name + '_block1')
         for i in range(2, blocks):
             x = resnet.block2(x, filters, name=name + '_block' + str(i))
-
         # CBAM module inserted here
-        f_dashdash = CBAM.create_residual_attention_module(x)
+        f_dashdash = CBAM.create_cbam_module(x)
         x = layers.Add()([x, f_dashdash])
-
         x = resnet.block2(x, filters, stride=stride1, name=name + '_block' + str(blocks))
         return x
 
@@ -207,7 +225,7 @@ def create_CBAM_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), classes=CLASSE
         stack_fn,
         True,
         True,
-        'CBAM_Resnet50v2',
+        model_name=name,
         weights=None,
         input_shape=input_shape,
         classes=classes)
@@ -216,6 +234,16 @@ def create_CBAM_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), classes=CLASSE
 
 
 def tiny_cnn(input_shape=(HEIGHT, WIDTH, CHANNELS), classes=CLASSES, additional_batchnorm=False):
+    '''
+    CNN Used in two-stream-network paper
+    Args:
+        input_shape:
+        classes:
+        additional_batchnorm:
+
+    Returns:
+
+    '''
     model = Sequential()
     model.add(layers.Input(input_shape))
     model.add(layers.Conv2D(96, 7, 2, activation="relu"))

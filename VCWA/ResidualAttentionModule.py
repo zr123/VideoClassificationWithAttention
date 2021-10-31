@@ -32,13 +32,13 @@ def create_residual_attention_module(
     # p: pre-processing
     for i in range(p):
         x = residual_block_fn(x, filters, name=name + "_preblock" + str(i))
-    # t: trunk branch
-    for i in range(t):
-        trunk = residual_block_fn(x, filters, name=name + "_trunkblock" + str(i))
     # mask branch
     mask = create_mask_branch(x, filters, r, residual_block_fn, shortcuts, name, attention_function)
+    # t: trunk branch (x becomes trunk)
+    for i in range(t):
+        x = residual_block_fn(x, filters, name=name + "_trunkblock" + str(i))
     # fusion
-    x = layers.Add()([trunk, layers.Multiply()([trunk, mask])])
+    x = layers.Add()([x, layers.Multiply()([x, mask])])
     # p: post-processing
     for i in range(p):
         x = residual_block_fn(x, filters, name=name + "_postblock" + str(i))
