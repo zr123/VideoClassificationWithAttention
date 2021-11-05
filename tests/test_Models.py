@@ -22,28 +22,10 @@ def test_create_3DCNN(classes):
     tf.debugging.assert_shapes([(model.output, (None, classes))])
 
 
-@pytest.mark.parametrize("classes", [51, 101, 174])
-def test_create_LSTM(classes):
-    model = Models.create_LSTM((None, 224, 224, 3), classes=classes)
-    tf.debugging.assert_shapes([(model.output, (None, classes))])
-
-
-@pytest.mark.parametrize("classes", [51, 101, 174])
-def test_create_Transfer_LSTM(classes):
-    model = Models.create_Transfer_LSTM((None, 224, 224, 3), classes=classes)
-    tf.debugging.assert_shapes([(model.output, (None, classes))])
-
-
-@pytest.mark.parametrize("classes", [51, 101, 174])
-def test_lstm_test(classes):
-    model = Models.lstm_test((None, 224, 224, 3), classes=classes)
-    tf.debugging.assert_shapes([(model.output, (None, classes))])
-
-
 def test_assemble_lstm():
     dummy_vid = np.zeros((1, 20, 224, 224, 3))
-    basenet = tf.keras.applications.ResNet50V2()
-    lstm = Models.assemble_lstm(basenet, classes=51, recreate_top=True)
+    backbone = tf.keras.applications.ResNet50V2()
+    lstm = Models.assemble_lstm(backbone, classes=51)
     tf.debugging.assert_shapes([(lstm.output, (None, 51))])
     lstm.predict(dummy_vid)
 
