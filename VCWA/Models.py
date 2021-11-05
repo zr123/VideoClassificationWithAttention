@@ -2,7 +2,6 @@ import tensorflow as tf
 from tensorflow.python.keras import Input
 from tensorflow.python.keras import layers
 from tensorflow.python.keras.models import Sequential, Model
-from tensorflow.keras.applications import InceptionResNetV2
 from VCWA import AttentionModels, Common
 import imageio
 import numpy as np
@@ -66,100 +65,20 @@ def create_3DCNN(input_shape=(FRAMES, HEIGHT, WIDTH, CHANNELS), classes=CLASSES)
     return model
 
 
-def create_LSTM(input_shape=(FRAMES, HEIGHT, WIDTH, CHANNELS), classes=CLASSES):
-    model = Sequential(name="LSTM")
-    model.add(Input(input_shape))
-    # 2D conv Layers with time distribution
-    model.add(layers.TimeDistributed(layers.Conv2D(32, kernel_size=(3, 3), activation="relu")))
-    model.add(layers.TimeDistributed(layers.MaxPooling2D(pool_size=(2, 2))))
-    model.add(layers.TimeDistributed(layers.Conv2D(32, kernel_size=(3, 3), activation="relu")))
-    model.add(layers.TimeDistributed(layers.MaxPooling2D(pool_size=(2, 2))))
-    model.add(layers.TimeDistributed(layers.Conv2D(32, kernel_size=(3, 3), activation="relu")))
-    model.add(layers.TimeDistributed(layers.MaxPooling2D(pool_size=(2, 2))))
-    model.add(layers.TimeDistributed(layers.Conv2D(32, kernel_size=(3, 3), activation="relu")))
-    model.add(layers.TimeDistributed(layers.MaxPooling2D(pool_size=(2, 2))))
-    model.add(layers.TimeDistributed(layers.Conv2D(32, kernel_size=(3, 3), activation="relu")))
-    model.add(layers.TimeDistributed(layers.MaxPooling2D(pool_size=(2, 2))))
-    model.add(layers.TimeDistributed(layers.Flatten()))
-    # LSTM
-    model.add(layers.LSTM(1024))
-    # dense layers
-    model.add(layers.Dense(64, activation="relu"))
-    model.add(layers.Dense(64, activation="relu"))
-    # finalize
-    model.add(layers.Dense(classes, activation="softmax"))
-    model.compile(
-        optimizer='adam',
-        loss="categorical_crossentropy",
-        metrics=[tf.keras.metrics.Accuracy(), tf.keras.metrics.TopKCategoricalAccuracy(5)])
-    return model
+def assemble_lstm(backbone, classes):#, recreate_top=False):
+    inputs = layers.Input(backbone.inputs[0].shape)
+    # strip the prediction layer and use the cnn-frames as lstm-inputs
+    x = layers.TimeDistributed(
+        Model(inputs=backbone.inputs, outputs=[backbone.layers[-2].output])
+    )(inputs)
 
-
-def assemble_lstm(basenet, classes, recreate_top=False):
-    inputs = layers.Input(basenet.inputs[0].shape)
-    if recreate_top:
-        x = layers.TimeDistributed(recreate_top_fn(basenet, classes))(inputs)
-    else:
-        x = layers.TimeDistributed(basenet)(inputs)
-
-    x = layers.LSTM(1024, return_sequences=False, dropout=0.5)(x)
-    x = layers.Dense(512, activation='relu')(x)
-    x = layers.Dropout(0.5)(x)
+    x = layers.LSTM(512, return_sequences=True, dropout=0.5)(x)
+    x = layers.LSTM(512, return_sequences=True, dropout=0.5)(x)
+    x = layers.LSTM(512, return_sequences=False, dropout=0.5)(x)
+    #x = layers.Dense(512, activation='relu')(x)
+    #x = layers.Dropout(0.5)(x)
     x = layers.Dense(classes, activation='softmax')(x)
-    model = Model(inputs=inputs, outputs=x)
-    model.compile(
-        optimizer='adam',
-        loss="categorical_crossentropy",
-        metrics=[tf.keras.metrics.Accuracy(), tf.keras.metrics.TopKCategoricalAccuracy(5)])
-    return model
-
-
-def create_Transfer_LSTM(input_shape=(FRAMES, HEIGHT, WIDTH, CHANNELS), classes=CLASSES):
-    model = Sequential(name="TransferLSTM")
-    model.add(Input(input_shape))
-    model.add(
-        layers.TimeDistributed(InceptionResNetV2(
-            input_shape=input_shape[1:4],
-            include_top=False)))
-    # Make transferlearning basemodel weights nontrainable
-    model.layers[0].trainable = False
-    model.add(layers.TimeDistributed(layers.GlobalAveragePooling2D()))
-    # LSTM
-    model.add(layers.LSTM(128))
-    # dense layers
-    model.add(layers.Dense(64, activation="relu"))
-    model.add(layers.Dense(64, activation="relu"))
-    # finalize
-    model.add(layers.Dense(classes, activation="softmax"))
-    model.compile(
-        optimizer='adam',
-        loss="categorical_crossentropy",
-        metrics=[tf.keras.metrics.Accuracy(), tf.keras.metrics.TopKCategoricalAccuracy(5)])
-    return model
-
-
-def lstm_test(input_shape=(FRAMES, HEIGHT, WIDTH, CHANNELS), classes=CLASSES):
-    model = Sequential(name="TrailTransferLSTM")
-    model.add(Input(input_shape))
-    model.add(
-        layers.TimeDistributed(InceptionResNetV2(
-            input_shape=input_shape[1:4],
-            include_top=False)))
-    # Make transferlearning basemodel weights nontrainable
-    model.layers[0].trainable = False
-    model.add(layers.TimeDistributed(layers.GlobalAveragePooling2D()))
-
-    # Model.
-    model.add(layers.LSTM(1024, return_sequences=False,
-                   dropout=0.5))
-    model.add(layers.Dense(512, activation='relu'))
-    model.add(layers.Dropout(0.5))
-    model.add(layers.Dense(classes, activation='softmax'))
-    model.compile(
-        optimizer='adam',
-        loss="categorical_crossentropy",
-        metrics=[tf.keras.metrics.Accuracy(), tf.keras.metrics.TopKCategoricalAccuracy(5)])
-    return model
+    return Model(inputs=inputs, outputs=x, name="LSTM_" + backbone.name)
 
 
 def assemble_TwoStreamModel(spatial_stream_model, temporal_stream_model, classes, fusion="average", recreate_top=False):
