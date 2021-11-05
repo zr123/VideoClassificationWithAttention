@@ -268,7 +268,7 @@ def display_attention_batch(model, x, use_attention=False, CAM_layer=None, cmap=
         attention_slice = []
         for a in attention:
             attention_slice.append(a[i])
-        overlay = combine_attention(attention_slice)
+        overlay = combine_attention(attention_slice, size=x.shape[1:3])
         combined_image = overlay_attention(x[i], overlay, cmap=cmap)
         display_attention_maps(x[i], [combined_image] + attention_slice, cmap=cmap)
 

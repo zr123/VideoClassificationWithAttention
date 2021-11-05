@@ -11,15 +11,16 @@ def create_cbam_module(x, r=16.0, k=7):
             r: reduction ratio of the hidden layer in the channel attention block
             k: kernel-size of the Conv2D layer in the spatial attention block
     """
-    channels = x.shape[3]
-    f_dash = create_channel_attention_block(x, r, channels)
+    f_dash = create_channel_attention_block(x, r)
     f_dashdash = create_spatial_attention_block(f_dash, k)
     return f_dashdash
 
 
-def create_channel_attention_block(x, r, channel_count):
+def create_channel_attention_block(x, r):
+    channel_count = x.shape[3]
     f_c_avg = layers.GlobalAveragePooling2D()(x)
     f_c_max = layers.GlobalMaxPooling2D()(x)
+    # shared mlp
     mlp = Sequential([
         layers.Dense(channel_count / r, activation="relu"),
         layers.Dense(channel_count)

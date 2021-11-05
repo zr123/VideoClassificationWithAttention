@@ -59,10 +59,7 @@ def create_L2PA_ResNet50v2(
     model_output = layers.Dropout(0.5)(model_output)
     model_output = tf.keras.layers.Dense(classes, activation="softmax")(model_output)
 
-    train_model = Model(inputs=input_layer, outputs=model_output, name=name)
-    train_model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
-
-    return train_model
+    return Model(inputs=input_layer, outputs=model_output, name=name)
 
 
 def create_AttentionGated_ResNet50v2(
@@ -106,9 +103,7 @@ def create_AttentionGated_ResNet50v2(
 
     final = layers.Average()([attended_features1, attended_features2, attended_features3, top])
 
-    model = tf.keras.models.Model(inputs=input_layer, outputs=final, name=name)
-    model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
-    return model
+    return tf.keras.models.Model(inputs=input_layer, outputs=final, name=name)
 
 
 def create_AttentionGatedGrid_ResNet50v2(
@@ -157,9 +152,7 @@ def create_AttentionGatedGrid_ResNet50v2(
 
     final = layers.Average()([attended_features1, attended_features2, attended_features3, top])
 
-    model = tf.keras.models.Model(inputs=input_layer, outputs=final, name=name)
-    model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
-    return model
+    return tf.keras.models.Model(inputs=input_layer, outputs=final, name=name)
 
 
 def create_ResidualAttention_ResNet50v2(
@@ -192,7 +185,7 @@ def create_ResidualAttention_ResNet50v2(
         x = ResidualAttention_stack(x, 256, 6, shortcuts=0, name='conv4')
         return resnet.stack2(x, 512, 3, stride1=1, name='conv5')
 
-    model = resnet.ResNet(
+    return resnet.ResNet(
         stack_fn,
         True,
         True,
@@ -200,8 +193,6 @@ def create_ResidualAttention_ResNet50v2(
         weights=None,
         input_shape=input_shape,
         classes=classes)
-    model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
-    return model
 
 
 def create_CBAM_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), classes=CLASSES, name='CBAM_Resnet50v2'):
@@ -221,7 +212,7 @@ def create_CBAM_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), classes=CLASSE
         x = CBAM_stack(x, 256, 6, name='conv4')
         return resnet.stack2(x, 512, 3, stride1=1, name='conv5')
 
-    model = resnet.ResNet(
+    return resnet.ResNet(
         stack_fn,
         True,
         True,
@@ -229,39 +220,3 @@ def create_CBAM_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), classes=CLASSE
         weights=None,
         input_shape=input_shape,
         classes=classes)
-    model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
-    return model
-
-
-def tiny_cnn(input_shape=(HEIGHT, WIDTH, CHANNELS), classes=CLASSES, additional_batchnorm=False):
-    '''
-    CNN Used in two-stream-network paper
-    Args:
-        input_shape:
-        classes:
-        additional_batchnorm:
-
-    Returns:
-
-    '''
-    model = Sequential()
-    model.add(layers.Input(input_shape))
-    model.add(layers.Conv2D(96, 7, 2, activation="relu"))
-    model.add(layers.MaxPooling2D(3, 2))
-    model.add(layers.BatchNormalization())
-    model.add(layers.Conv2D(256, 5, 2, activation="relu"))
-    model.add(layers.MaxPooling2D(3, 2))
-    if additional_batchnorm:
-        model.add(layers.BatchNormalization())
-    model.add(layers.Conv2D(512, 3, 1, activation="relu"))
-    model.add(layers.Conv2D(512, 3, 1, activation="relu"))
-    model.add(layers.Conv2D(512, 3, 1, activation="relu"))
-    model.add(layers.MaxPooling2D(3, 2))
-    model.add(layers.Flatten())
-    model.add(layers.Dense(4096, activation="relu", name="spatial_full6"))
-    model.add(layers.Dropout(0.5))
-    model.add(layers.Dense(2048, activation="relu", name="spatial_full7"))
-    model.add(layers.Dropout(0.5))
-    model.add(layers.Dense(classes, activation="softmax", name="spatial_softmax"))
-    model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
-    return model
