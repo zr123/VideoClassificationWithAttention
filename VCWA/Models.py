@@ -5,6 +5,7 @@ from tensorflow.python.keras.models import Sequential, Model
 from VCWA import AttentionModels, Common
 import imageio
 import numpy as np
+import datetime
 
 # downscaled defaults for hmdb51
 HEIGHT = 224
@@ -65,7 +66,7 @@ def create_3DCNN(input_shape=(FRAMES, HEIGHT, WIDTH, CHANNELS), classes=CLASSES)
     return model
 
 
-def assemble_lstm(backbone, classes):#, recreate_top=False):
+def assemble_lstm(backbone, classes):
     inputs = layers.Input(backbone.inputs[0].shape)
     # strip the prediction layer and use the cnn-frames as lstm-inputs
     x = layers.TimeDistributed(
@@ -75,8 +76,6 @@ def assemble_lstm(backbone, classes):#, recreate_top=False):
     x = layers.LSTM(512, return_sequences=True, dropout=0.5)(x)
     x = layers.LSTM(512, return_sequences=True, dropout=0.5)(x)
     x = layers.LSTM(512, return_sequences=False, dropout=0.5)(x)
-    #x = layers.Dense(512, activation='relu')(x)
-    #x = layers.Dropout(0.5)(x)
     x = layers.Dense(classes, activation='softmax')(x)
     return Model(inputs=inputs, outputs=x, name="LSTM_" + backbone.name)
 
@@ -150,5 +149,49 @@ def get_twostream_gradcam(inputs, model, layer_name, include_input=True, cmap='i
 
 
 def video_to_gif(images, path="./attention.gif", fps=7):
-    images = (np.array(images)*255).astype(np.uint8)
+    images = (np.array(images) * 255).astype(np.uint8)
     imageio.mimsave(path, images, fps=fps)
+
+
+def train_optflow_model(video_model,
+           optflow_model,
+           video_train_gen,
+           video_test_gen,
+           optflow_train_gen,
+           optflow_test_gen,
+           twostream_test_gen,
+           iterations=1,
+           classes=CLASSES,
+           log_basedir="logs/fit_twostream_25_L10/resnet/",
+           model_basedir="models/twostream_25_L10/"):
+    vid_tensorboard_callback = tf.keras.callbacks.TensorBoard(
+        log_dir=log_basedir + "video/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
+        histogram_freq=1)
+    optflow_tensorboard_callback = tf.keras.callbacks.TensorBoard(
+        log_dir=log_basedir + "optflow/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
+        histogram_freq=1)
+    twostream_tensorboard_callback = tf.keras.callbacks.TensorBoard(
+        log_dir=log_basedir + "twostream/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
+        histogram_freq=1)
+
+    for i in range(iterations):
+        # Video Model
+        video_model.fit(
+            video_train_gen,
+            epochs=1,
+            validation_data=video_test_gen,
+            callbacks=[vid_tensorboard_callback])
+
+        # Optflow Model
+        optflow_model.fit(
+            optflow_train_gen,
+            epochs=1,
+            validation_data=optflow_test_gen,
+            callbacks=[optflow_tensorboard_callback])
+
+        twostream = assemble_TwoStreamModel(video_model, optflow_model, classes, fusion="average", recreate_top=True)
+        twostream.evaluate(twostream_test_gen, callbacks=[twostream_tensorboard_callback])
+
+        # save models
+        video_model.save(model_basedir + "video/" + video_model.name)
+        optflow_model.save(model_basedir + "optflow/" + optflow_model.name)
