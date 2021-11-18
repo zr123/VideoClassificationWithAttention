@@ -46,31 +46,31 @@ def test_assemble_TwoStreamModel():
 
 @pytest.mark.parametrize("classes", [10, 100, 1000])
 def test_create_L2PA_ResNet50v2(classes):
-    model = AttentionModels.create_L2PA_ResNet50v2((224, 224, 3), classes=classes)
+    model = AttentionModels.create_L2PA_MobileNetV2((224, 224, 3), classes=classes)
     tf.debugging.assert_shapes([(model.output, (None, classes))])
 
 
 @pytest.mark.parametrize("classes", [10, 100, 1000])
 def test_create_AttentionGated_ResNet50v2(classes):
-    model = AttentionModels.create_AttentionGated_ResNet50v2((224, 224, 3), classes=classes)
+    model = AttentionModels.create_AttentionGated_MobileNetV2((224, 224, 3), classes=classes)
     tf.debugging.assert_shapes([(model.output, (None, classes))])
 
 
 @pytest.mark.parametrize("classes", [10, 100, 1000])
 def test_create_AttentionGatedGrid_ResNet50v2(classes):
-    model = AttentionModels.create_AttentionGatedGrid_ResNet50v2((224, 224, 3), classes=classes)
+    model = AttentionModels.create_AttentionGatedGrid_MobileNetV2((224, 224, 3), classes=classes)
     tf.debugging.assert_shapes([(model.output, (None, classes))])
 
 
 @pytest.mark.parametrize("classes", [10, 100, 1000])
 def test_create_ResidualAttention_ResNet50v2(classes):
-    model = AttentionModels.create_ResidualAttention_ResNet50v2((224, 224, 3), classes=classes)
+    model = AttentionModels.create_ResidualAttention_MobileNetV2((224, 224, 3), classes=classes)
     tf.debugging.assert_shapes([(model.output, (None, classes))])
 
 
 @pytest.mark.parametrize("classes", [10, 100, 1000])
 def test_create_CBAM_ResNet50v2(classes):
-    model = AttentionModels.create_CBAM_ResNet50v2((224, 224, 3), classes=classes)
+    model = AttentionModels.create_CBAM_MobileNetV2((224, 224, 3), classes=classes)
     tf.debugging.assert_shapes([(model.output, (None, classes))])
 
 
@@ -79,8 +79,8 @@ def test_create_CBAM_ResNet50v2(classes):
 #####################
 
 def test_get_twostream_attention():
-    vid_model = AttentionModels.create_ResidualAttention_ResNet50v2((224, 224, 3), classes=51)
-    optflow_model = AttentionModels.create_ResidualAttention_ResNet50v2((224, 224, 3), classes=51)
+    vid_model = AttentionModels.create_ResidualAttention_MobileNetV2((224, 224, 3), classes=51)
+    optflow_model = AttentionModels.create_ResidualAttention_MobileNetV2((224, 224, 3), classes=51)
     two_stream_model = Models.assemble_TwoStreamModel(vid_model, optflow_model, 51, fusion="average", recreate_top=True)
     dummy_vid = np.zeros((1, 20, 224, 224, 3))
     attention = Models.get_twostream_attention(dummy_vid[0], two_stream_model, include_input=False)
@@ -88,8 +88,8 @@ def test_get_twostream_attention():
 
 
 def test_get_twostream_attention_with_input():
-    vid_model = AttentionModels.create_ResidualAttention_ResNet50v2((224, 224, 3), classes=51)
-    optflow_model = AttentionModels.create_ResidualAttention_ResNet50v2((224, 224, 3), classes=51)
+    vid_model = AttentionModels.create_ResidualAttention_MobileNetV2((224, 224, 3), classes=51)
+    optflow_model = AttentionModels.create_ResidualAttention_MobileNetV2((224, 224, 3), classes=51)
     two_stream_model = Models.assemble_TwoStreamModel(vid_model, optflow_model, 51, fusion="average", recreate_top=True)
     dummy_vid = np.zeros((1, 20, 224, 224, 3))
     attention = Models.get_twostream_attention(dummy_vid[0], two_stream_model)

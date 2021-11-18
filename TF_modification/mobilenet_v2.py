@@ -326,6 +326,9 @@ def MobileNetV2(input_shape=None,
   x = _inverted_res_block(
       x, filters=24, alpha=alpha, stride=1, expansion=6, block_id=2)
 
+  if attention_builder_fn is not None:
+      x = attention_builder_fn(x, filters=24/4, shortcuts=2, name="attn1")
+
   x = _inverted_res_block(
       x, filters=32, alpha=alpha, stride=2, expansion=6, block_id=3)
   x = _inverted_res_block(
@@ -334,7 +337,7 @@ def MobileNetV2(input_shape=None,
       x, filters=32, alpha=alpha, stride=1, expansion=6, block_id=5)
 
   if attention_builder_fn is not None:
-      x = attention_builder_fn(x, filters=32)
+      x = attention_builder_fn(x, filters=32/4, shortcuts=1, name="attn2")
 
   x = _inverted_res_block(
       x, filters=64, alpha=alpha, stride=2, expansion=6, block_id=6)
@@ -345,9 +348,6 @@ def MobileNetV2(input_shape=None,
   x = _inverted_res_block(
       x, filters=64, alpha=alpha, stride=1, expansion=6, block_id=9)
 
-  # maybe attention here instead? (also 14x14 spatial dimensions)
-  # if attention_builder_fn is not None:
-  #     x = attention_builder_fn(x, filters=64)
 
   x = _inverted_res_block(
       x, filters=96, alpha=alpha, stride=1, expansion=6, block_id=10)
@@ -357,7 +357,7 @@ def MobileNetV2(input_shape=None,
       x, filters=96, alpha=alpha, stride=1, expansion=6, block_id=12)
 
   if attention_builder_fn is not None:
-      x = attention_builder_fn(x, filters=96)
+      x = attention_builder_fn(x, filters=96/4, shortcuts=0, name="attn3")
 
   x = _inverted_res_block(
       x, filters=160, alpha=alpha, stride=2, expansion=6, block_id=13)
@@ -366,8 +366,6 @@ def MobileNetV2(input_shape=None,
   x = _inverted_res_block(
       x, filters=160, alpha=alpha, stride=1, expansion=6, block_id=15)
 
-  if attention_builder_fn is not None:
-      x = attention_builder_fn(x, filters=160)
 
   x = _inverted_res_block(
       x, filters=320, alpha=alpha, stride=1, expansion=6, block_id=16)

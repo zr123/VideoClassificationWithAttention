@@ -28,13 +28,13 @@ def get_attention_extractor(model):
     return attention_extractor_model
 
 
-def create_L2PA_ResNet50v2(
+def create_L2PA_MobileNetV2(
         input_shape=(HEIGHT, WIDTH, CHANNELS),
         classes=CLASSES,
         name="L2PA_MobileNetV2",
         basenet_fn=mobilenet_v2.MobileNetV2,
         layer_names=["block_5_add", "block_12_add", "block_15_add"]):
-    basenet = mobilenet_v2.MobileNetV2(
+    basenet = basenet_fn(
         input_shape=input_shape,
         classes=classes,
         include_top=False,
@@ -67,7 +67,7 @@ def create_L2PA_ResNet50v2(
     return Model(inputs=input_layer, outputs=model_output, name=name)
 
 
-def create_AttentionGated_ResNet50v2(
+def create_AttentionGated_MobileNetV2(
         input_shape=(HEIGHT, WIDTH, CHANNELS),
         classes=CLASSES,
         name="AttGated_MobileNetV2",
@@ -116,7 +116,7 @@ def create_AttentionGated_ResNet50v2(
     return tf.keras.models.Model(inputs=input_layer, outputs=final, name=name)
 
 
-def create_AttentionGatedGrid_ResNet50v2(
+def create_AttentionGatedGrid_MobileNetV2(
         input_shape=(HEIGHT, WIDTH, CHANNELS),
         classes=CLASSES,
         name="AttGatedGrid_MobileNetV2",
@@ -166,7 +166,7 @@ def create_AttentionGatedGrid_ResNet50v2(
     return tf.keras.models.Model(inputs=input_layer, outputs=final, name=name)
 
 
-def create_ResidualAttention_ResNet50v2(
+def create_ResidualAttention_MobileNetV2(
         input_shape=(HEIGHT, WIDTH, CHANNELS),
         classes=CLASSES,
         name='ResAttentionMobileNetV2',
@@ -178,17 +178,15 @@ def create_ResidualAttention_ResNet50v2(
         classes=classes,
         attention_builder_fn=ResidualAttentionModule.create_residual_attention_module,
         weights=None)
-
     model._name = name
     return model
 
 
-def create_CBAM_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), classes=CLASSES, name='CBAM_MobileNetV2'):
+def create_CBAM_MobileNetV2(input_shape=(HEIGHT, WIDTH, CHANNELS), classes=CLASSES, name='CBAM_MobileNetV2'):
     model = mobilenet_v2.MobileNetV2(
         input_shape=input_shape,
         classes=classes,
         attention_builder_fn=CBAM.create_cbam_module,
         weights=None)
-
     model._name = name
     return model
