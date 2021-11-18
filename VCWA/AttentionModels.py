@@ -201,8 +201,7 @@ def create_CBAM_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), classes=CLASSE
         for i in range(2, blocks):
             x = resnet.block2(x, filters, name=name + '_block' + str(i))
         # CBAM module inserted here
-        f_dashdash = CBAM.create_cbam_module(x)
-        x = layers.Add()([x, f_dashdash])
+        x = CBAM.create_cbam_module(x)
         x = resnet.block2(x, filters, stride=stride1, name=name + '_block' + str(blocks))
         return x
 

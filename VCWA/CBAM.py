@@ -3,7 +3,7 @@ from tensorflow.keras import layers, activations
 from tensorflow.keras.models import Sequential
 
 
-def create_cbam_module(x, r=16.0, k=7):
+def create_cbam_module(x, r=16.0, k=7, **kwargs):
     """CBAM: Convolutional Block Attention Module by Woo et al.
 
         Arguments:
@@ -13,7 +13,8 @@ def create_cbam_module(x, r=16.0, k=7):
     """
     f_dash = create_channel_attention_block(x, r)
     f_dashdash = create_spatial_attention_block(f_dash, k)
-    return f_dashdash
+    x = layers.Add()([x, f_dashdash])
+    return x
 
 
 def create_channel_attention_block(x, r):
