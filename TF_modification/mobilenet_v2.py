@@ -105,6 +105,7 @@ def MobileNetV2(input_shape=None,
                 pooling=None,
                 classes=1000,
                 classifier_activation='softmax',
+                attention_builder_fn=None,
                 **kwargs):
   """Instantiates the MobileNetV2 architecture.
 
@@ -332,6 +333,9 @@ def MobileNetV2(input_shape=None,
   x = _inverted_res_block(
       x, filters=32, alpha=alpha, stride=1, expansion=6, block_id=5)
 
+  if attention_builder_fn is not None:
+      x = attention_builder_fn(x)
+
   x = _inverted_res_block(
       x, filters=64, alpha=alpha, stride=2, expansion=6, block_id=6)
   x = _inverted_res_block(
@@ -341,6 +345,10 @@ def MobileNetV2(input_shape=None,
   x = _inverted_res_block(
       x, filters=64, alpha=alpha, stride=1, expansion=6, block_id=9)
 
+  # maybe attention here instead? (also 14x14 spatial dimensions)
+  # if attention_builder_fn is not None:
+  #     x = attention_builder_fn(x)
+
   x = _inverted_res_block(
       x, filters=96, alpha=alpha, stride=1, expansion=6, block_id=10)
   x = _inverted_res_block(
@@ -348,12 +356,18 @@ def MobileNetV2(input_shape=None,
   x = _inverted_res_block(
       x, filters=96, alpha=alpha, stride=1, expansion=6, block_id=12)
 
+  if attention_builder_fn is not None:
+      x = attention_builder_fn(x)
+
   x = _inverted_res_block(
       x, filters=160, alpha=alpha, stride=2, expansion=6, block_id=13)
   x = _inverted_res_block(
       x, filters=160, alpha=alpha, stride=1, expansion=6, block_id=14)
   x = _inverted_res_block(
       x, filters=160, alpha=alpha, stride=1, expansion=6, block_id=15)
+
+  if attention_builder_fn is not None:
+      x = attention_builder_fn(x)
 
   x = _inverted_res_block(
       x, filters=320, alpha=alpha, stride=1, expansion=6, block_id=16)
