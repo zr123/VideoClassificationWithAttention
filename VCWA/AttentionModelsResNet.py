@@ -1,10 +1,10 @@
 import tensorflow as tf
 from tensorflow.python.keras import layers
-from tensorflow.python.keras.models import Model
+from tensorflow.python.keras.models import Model, Sequential
+from tensorflow.python.keras.applications import resnet
 from VCWA import ResidualAttentionModule, CBAM
 from VCWA.AttentionModule import AttentionModule
 from VCWA.AttentionGate import AttentionGate
-from TF_modification import mobilenet_v2
 
 
 HEIGHT = 224
@@ -31,22 +31,17 @@ def get_attention_extractor(model):
 def create_L2PA_ResNet50v2(
         input_shape=(HEIGHT, WIDTH, CHANNELS),
         classes=CLASSES,
-        name="L2PA_MobileNetV2",
-        basenet_fn=mobilenet_v2.MobileNetV2,
-        layer_names=["block_5_add", "block_12_add", "block_15_add"]):
-    basenet = mobilenet_v2.MobileNetV2(
-        input_shape=input_shape,
-        classes=classes,
-        include_top=False,
-        weights=None)
+        name="L2PA_ResNet50v2",
+        weights=None):
+    basenet = tf.keras.applications.ResNet50V2(input_shape=input_shape, classes=classes, include_top=False, weights=weights)
     input_layer = basenet.input
 
     for layer in basenet.layers:
-        if layer.name == layer_names[0]:
+        if layer.name == "conv2_block3_out":
             local1 = layer
-        if layer.name == layer_names[1]:
+        if layer.name == "conv3_block4_out":
             local2 = layer
-        if layer.name == layer_names[2]:
+        if layer.name == "conv4_block6_out":
             local3 = layer
 
     global_features = layers.GlobalAveragePooling2D()(basenet.output)
@@ -70,22 +65,17 @@ def create_L2PA_ResNet50v2(
 def create_AttentionGated_ResNet50v2(
         input_shape=(HEIGHT, WIDTH, CHANNELS),
         classes=CLASSES,
-        name="AttGated_MobileNetV2",
-        basenet_fn=mobilenet_v2.MobileNetV2,
-        layer_names=["block_5_add", "block_12_add", "block_15_add"]):
-    basenet = basenet_fn(
-        input_shape=input_shape,
-        classes=classes,
-        include_top=False,
-        weights=None)
+        name="AttGated_ResNet50v2",
+        weights=None):
+    basenet = tf.keras.applications.ResNet50V2(input_shape=input_shape, classes=classes, include_top=False, weights=weights)
     input_layer = basenet.input
 
     for layer in basenet.layers:
-        if layer.name == layer_names[0]:
+        if layer.name == "conv2_block3_out":
             local1 = layer
-        if layer.name == layer_names[1]:
+        if layer.name == "conv3_block4_out":
             local2 = layer
-        if layer.name == layer_names[2]:
+        if layer.name == "conv4_block6_out":
             local3 = layer
 
     global_features = layers.GlobalAveragePooling2D()(basenet.output)
@@ -119,22 +109,21 @@ def create_AttentionGated_ResNet50v2(
 def create_AttentionGatedGrid_ResNet50v2(
         input_shape=(HEIGHT, WIDTH, CHANNELS),
         classes=CLASSES,
-        name="AttGatedGrid_MobileNetV2",
-        basenet_fn=mobilenet_v2.MobileNetV2,
-        layer_names=["block_5_add", "block_12_add", "block_15_add"]):
-    basenet = basenet_fn(
+        name="AttGatedGrid_ResNet50v2",
+        weights=None):
+    basenet = tf.keras.applications.ResNet50V2(
         input_shape=input_shape,
         classes=classes,
         include_top=False,
-        weights=None)
+        weights=weights)
     input_layer = basenet.input
 
     for layer in basenet.layers:
-        if layer.name == layer_names[0]:
+        if layer.name == "conv2_block3_out":
             local1 = layer
-        if layer.name == layer_names[1]:
+        if layer.name == "conv3_block4_out":
             local2 = layer
-        if layer.name == layer_names[2]:
+        if layer.name == "conv4_block6_out":
             local3 = layer
 
     global_features = basenet.output
@@ -169,26 +158,64 @@ def create_AttentionGatedGrid_ResNet50v2(
 def create_ResidualAttention_ResNet50v2(
         input_shape=(HEIGHT, WIDTH, CHANNELS),
         classes=CLASSES,
-        name='ResAttentionMobileNetV2',
+        name='ResAttentionNet50v2',
         p=0,
         t=2,
         r=1):
-    model = mobilenet_v2.MobileNetV2(
+    def ResidualAttention_stack(x, filters, blocks, shortcuts, stride1=2, name=None):
+        x = resnet.block2(x, filters, conv_shortcut=True, name=name + '_block1')
+        for i in range(2, blocks):
+            x = resnet.block2(x, filters, name=name + '_block' + str(i))
+        # residual attention module inserted here
+        x = ResidualAttentionModule.create_residual_attention_module(
+            x,
+            filters,
+            shortcuts=shortcuts,
+            name=name + "_attn",
+            attention_function="sigmoid",
+            p=p,
+            t=t,
+            r=r)
+        x = resnet.block2(x, filters, stride=stride1, name=name + '_block' + str(blocks))
+        return x
+
+    def stack_fn(x):
+        x = ResidualAttention_stack(x, 64, 3, shortcuts=2, name='conv2')
+        x = ResidualAttention_stack(x, 128, 4, shortcuts=1, name='conv3')
+        x = ResidualAttention_stack(x, 256, 6, shortcuts=0, name='conv4')
+        return resnet.stack2(x, 512, 3, stride1=1, name='conv5')
+
+    return resnet.ResNet(
+        stack_fn,
+        True,
+        True,
+        model_name=name,
+        weights=None,
         input_shape=input_shape,
-        classes=classes,
-        attention_builder_fn=ResidualAttentionModule.create_residual_attention_module,
-        weights=None)
-
-    model._name = name
-    return model
+        classes=classes)
 
 
-def create_CBAM_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), classes=CLASSES, name='CBAM_MobileNetV2'):
-    model = mobilenet_v2.MobileNetV2(
+def create_CBAM_ResNet50v2(input_shape=(HEIGHT, WIDTH, CHANNELS), classes=CLASSES, name='CBAM_Resnet50v2'):
+    def CBAM_stack(x, filters, blocks, stride1=2, name=None):
+        x = resnet.block2(x, filters, conv_shortcut=True, name=name + '_block1')
+        for i in range(2, blocks):
+            x = resnet.block2(x, filters, name=name + '_block' + str(i))
+        # CBAM module inserted here
+        x = CBAM.create_cbam_module(x)
+        x = resnet.block2(x, filters, stride=stride1, name=name + '_block' + str(blocks))
+        return x
+
+    def stack_fn(x):
+        x = CBAM_stack(x, 64, 3, name='conv2')
+        x = CBAM_stack(x, 128, 4, name='conv3')
+        x = CBAM_stack(x, 256, 6, name='conv4')
+        return resnet.stack2(x, 512, 3, stride1=1, name='conv5')
+
+    return resnet.ResNet(
+        stack_fn,
+        True,
+        True,
+        model_name=name,
+        weights=None,
         input_shape=input_shape,
-        classes=classes,
-        attention_builder_fn=CBAM.create_cbam_module,
-        weights=None)
-
-    model._name = name
-    return model
+        classes=classes)
