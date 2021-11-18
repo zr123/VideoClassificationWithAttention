@@ -188,7 +188,8 @@ def calc_optical_flow(frame1, frame2):
     if frame1.shape[2] == 3:
         frame1 = cv2.cvtColor(frame1, cv2.COLOR_BGR2GRAY)
         frame2 = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
-    flow = cv2.calcOpticalFlowFarneback(frame1, frame2, None, 0.5, 3, 15, 3, 5, 1.2, 0)
+    optical_flow = cv2.optflow.DualTVL1OpticalFlow_create()
+    flow = optical_flow.calc(frame1, frame2, None)
     return flow
 
 
