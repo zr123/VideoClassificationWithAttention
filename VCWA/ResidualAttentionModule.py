@@ -1,8 +1,18 @@
 import tensorflow as tf
 from tensorflow.keras import layers
 from tensorflow.keras.activations import sigmoid
-from tensorflow.python.keras.applications import resnet
+from TF_modification.mobilenet_v2 import _inverted_res_block
 from VCWA import Common
+
+
+def residual_block_helper(x, filters, name):
+    return _inverted_res_block(
+        x,
+        filters=filters,
+        alpha=1.0,
+        stride=1,
+        expansion=6,
+        block_id=name)
 
 
 def create_residual_attention_module(
@@ -11,7 +21,7 @@ def create_residual_attention_module(
         p=1,
         t=2,
         r=1,
-        residual_block_fn=resnet.block2,
+        residual_block_fn=residual_block_helper,
         shortcuts=0,
         name=None,
         attention_function="sigmoid"):
@@ -56,8 +66,8 @@ def create_mask_branch(x, filters, r, residual_block_fn, shortcuts, name, attent
     for i in range(r):
         x = residual_block_fn(x, filters, name=name + "_mask_postblock" + str(i))
     x = layers.UpSampling2D()(x)
-    x = layers.Conv2D(filters * 4, 1)(x)
-    x = layers.Conv2D(filters * 4, 1)(x)
+    x = layers.Conv2D(filters, 1)(x)
+    x = layers.Conv2D(filters, 1)(x)
     if attention_function == "softmax":
         x = Common.softmax2d(x, name=name + "_ResidualAttention")
     if attention_function == "sigmoid":
