@@ -33,7 +33,9 @@ def create_L2PA_MobileNetV2(
         classes=CLASSES,
         name="L2PA_MobileNetV2",
         basenet_fn=mobilenet_v2.MobileNetV2,
-        layer_names=["block_5_add", "block_12_add", "block_15_add"]):
+        layer_names=None):
+    if layer_names is None:
+        layer_names = ["block_5_add", "block_12_add", "block_15_add"]
     basenet = basenet_fn(
         input_shape=input_shape,
         classes=classes,
@@ -72,7 +74,9 @@ def create_AttentionGated_MobileNetV2(
         classes=CLASSES,
         name="AttGated_MobileNetV2",
         basenet_fn=mobilenet_v2.MobileNetV2,
-        layer_names=["block_5_add", "block_12_add", "block_15_add"]):
+        layer_names=None):
+    if layer_names is None:
+        layer_names = ["block_5_add", "block_12_add", "block_15_add"]
     basenet = basenet_fn(
         input_shape=input_shape,
         classes=classes,
@@ -121,7 +125,9 @@ def create_AttentionGatedGrid_MobileNetV2(
         classes=CLASSES,
         name="AttGatedGrid_MobileNetV2",
         basenet_fn=mobilenet_v2.MobileNetV2,
-        layer_names=["block_5_add", "block_12_add", "block_15_add"]):
+        layer_names=None):
+    if layer_names is None:
+        layer_names = ["block_5_add", "block_12_add", "block_15_add"]
     basenet = basenet_fn(
         input_shape=input_shape,
         classes=classes,

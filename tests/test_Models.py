@@ -24,17 +24,27 @@ def test_create_3DCNN(classes):
 
 def test_assemble_lstm():
     dummy_vid = np.zeros((1, 20, 224, 224, 3))
-    backbone = tf.keras.applications.ResNet50V2()
+    backbone = tf.keras.applications.MobileNetV2()
     lstm = Models.assemble_lstm(backbone, classes=51)
     tf.debugging.assert_shapes([(lstm.output, (None, 51))])
     lstm.predict(dummy_vid)
 
 
-def test_assemble_TwoStreamModel():
+def test_assemble_TwoStreamModel_MobileNetV2():
     dummy_vid = np.zeros((1, 20, 224, 224, 3))
     dummy_optflow = np.zeros((1, 15, 224, 224, 20))
-    vid_model = tf.keras.applications.ResNet50V2(input_shape=(224, 224, 3), include_top=True, classes=10, weights=None)
-    optflow_model = tf.keras.applications.ResNet50V2(input_shape=(224, 224, 20), include_top=True, classes=10, weights=None)
+    vid_model = tf.keras.applications.MobileNetV2(input_shape=(224, 224, 3), include_top=True, classes=10, weights=None)
+    optflow_model = tf.keras.applications.MobileNetV2(input_shape=(224, 224, 20), include_top=True, classes=10, weights=None)
+    two_stream_model = Models.assemble_TwoStreamModel(vid_model, optflow_model, 51, fusion="average", recreate_top=True)
+    tf.debugging.assert_shapes([(two_stream_model.output, (None, 51))])
+    two_stream_model.predict([dummy_vid, dummy_optflow])
+
+
+def test_assemble_TwoStreamModel_CBAM():
+    dummy_vid = np.zeros((1, 20, 224, 224, 3))
+    dummy_optflow = np.zeros((1, 15, 224, 224, 20))
+    vid_model = AttentionModels.create_CBAM_MobileNetV2(input_shape=(224, 224, 3), classes=10)
+    optflow_model = AttentionModels.create_CBAM_MobileNetV2(input_shape=(224, 224, 20), classes=10)
     two_stream_model = Models.assemble_TwoStreamModel(vid_model, optflow_model, 51, fusion="average", recreate_top=True)
     tf.debugging.assert_shapes([(two_stream_model.output, (None, 51))])
     two_stream_model.predict([dummy_vid, dummy_optflow])

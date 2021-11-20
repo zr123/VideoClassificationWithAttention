@@ -82,7 +82,7 @@ def assemble_lstm(backbone, classes):
 
 def assemble_TwoStreamModel(spatial_stream_model, temporal_stream_model, classes, fusion="average", recreate_top=False):
     spatial_stream_input = layers.Input(spatial_stream_model.inputs[0].shape)
-    temporal_stream_input = Input(temporal_stream_model.inputs[0].shape)
+    temporal_stream_input = layers.Input(temporal_stream_model.inputs[0].shape)
 
     if recreate_top:
         spatial_stream = layers.TimeDistributed(recreate_top_fn(spatial_stream_model, classes))(spatial_stream_input)
