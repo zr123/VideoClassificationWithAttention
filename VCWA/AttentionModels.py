@@ -74,7 +74,9 @@ def create_AttentionGated_MobileNetV2(
         classes=CLASSES,
         name="AttGated_MobileNetV2",
         basenet_fn=mobilenet_v2.MobileNetV2,
-        layer_names=None):
+        layer_names=None,
+        internal_dimensions=32,
+        final_dense_size=1024):
     if layer_names is None:
         layer_names = ["block_5_add", "block_12_add", "block_15_add"]
     basenet = basenet_fn(
@@ -94,23 +96,23 @@ def create_AttentionGated_MobileNetV2(
 
     global_features = layers.GlobalAveragePooling2D()(basenet.output)
 
-    a1 = AttentionGate(64)([local1.output, global_features])
-    a2 = AttentionGate(64)([local2.output, global_features])
-    a3 = AttentionGate(64)([local3.output, global_features])
+    a1 = AttentionGate(internal_dimensions)([local1.output, global_features])
+    a2 = AttentionGate(internal_dimensions)([local2.output, global_features])
+    a3 = AttentionGate(internal_dimensions)([local3.output, global_features])
 
     attended_features1 = layers.Multiply()([local1.output, a1])
     attended_features1 = layers.GlobalAveragePooling2D()(attended_features1)
-    attended_features1 = layers.Dense(2048, activation="relu")(attended_features1)
+    attended_features1 = layers.Dense(final_dense_size, activation="relu")(attended_features1)
     attended_features1 = layers.Dense(classes, activation="softmax")(attended_features1)
 
     attended_features2 = layers.Multiply()([local2.output, a2])
     attended_features2 = layers.GlobalAveragePooling2D()(attended_features2)
-    attended_features2 = layers.Dense(2048, activation="relu")(attended_features2)
+    attended_features2 = layers.Dense(final_dense_size, activation="relu")(attended_features2)
     attended_features2 = layers.Dense(classes, activation="softmax")(attended_features2)
 
     attended_features3 = layers.Multiply()([local3.output, a3])
     attended_features3 = layers.GlobalAveragePooling2D()(attended_features3)
-    attended_features3 = layers.Dense(2048, activation="relu")(attended_features3)
+    attended_features3 = layers.Dense(final_dense_size, activation="relu")(attended_features3)
     attended_features3 = layers.Dense(classes, activation="softmax")(attended_features3)
 
     top = layers.Dense(classes, activation="softmax")(global_features)
@@ -125,7 +127,9 @@ def create_AttentionGatedGrid_MobileNetV2(
         classes=CLASSES,
         name="AttGatedGrid_MobileNetV2",
         basenet_fn=mobilenet_v2.MobileNetV2,
-        layer_names=None):
+        layer_names=None,
+        internal_dimensions=32,
+        final_dense_size=1024):
     if layer_names is None:
         layer_names = ["block_5_add", "block_12_add", "block_15_add"]
     basenet = basenet_fn(
@@ -145,23 +149,23 @@ def create_AttentionGatedGrid_MobileNetV2(
 
     global_features = basenet.output
 
-    a1 = AttentionGate(64, grid_attention=True)([local1.output, global_features])
-    a2 = AttentionGate(64, grid_attention=True)([local2.output, global_features])
-    a3 = AttentionGate(64, grid_attention=True)([local3.output, global_features])
+    a1 = AttentionGate(internal_dimensions, grid_attention=True)([local1.output, global_features])
+    a2 = AttentionGate(internal_dimensions, grid_attention=True)([local2.output, global_features])
+    a3 = AttentionGate(internal_dimensions, grid_attention=True)([local3.output, global_features])
 
     attended_features1 = layers.Multiply()([local1.output, a1])
     attended_features1 = tf.keras.layers.GlobalAveragePooling2D()(attended_features1)
-    attended_features1 = layers.Dense(2048, activation="relu")(attended_features1)
+    attended_features1 = layers.Dense(final_dense_size, activation="relu")(attended_features1)
     attended_features1 = layers.Dense(classes, activation="softmax")(attended_features1)
 
     attended_features2 = layers.Multiply()([local2.output, a2])
     attended_features2 = tf.keras.layers.GlobalAveragePooling2D()(attended_features2)
-    attended_features2 = layers.Dense(2048, activation="relu")(attended_features2)
+    attended_features2 = layers.Dense(final_dense_size, activation="relu")(attended_features2)
     attended_features2 = layers.Dense(classes, activation="softmax")(attended_features2)
 
     attended_features3 = layers.Multiply()([local3.output, a3])
     attended_features3 = tf.keras.layers.GlobalAveragePooling2D()(attended_features3)
-    attended_features3 = layers.Dense(2048, activation="relu")(attended_features3)
+    attended_features3 = layers.Dense(final_dense_size, activation="relu")(attended_features3)
     attended_features3 = layers.Dense(classes, activation="softmax")(attended_features3)
 
     top = layers.GlobalAveragePooling2D()(basenet.output)
