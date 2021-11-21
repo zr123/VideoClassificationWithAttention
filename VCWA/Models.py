@@ -193,11 +193,13 @@ def train_optflow_model(video_model,
 
         twostream = assemble_TwoStreamModel(video_model, optflow_model, classes, fusion="average", recreate_top=True)
         # ugly workaround to fix a logging issue
+        x, y = twostream_test_gen.__getitem__(0)
         twostream.fit(
-            twostream_test_gen,
+            x,
+            y,
             epochs=i,
             initial_epoch=i-1,
-            validation_split=0.99,
+            validation_data=twostream_test_gen,
             callbacks=[twostream_tensorboard_callback]
         )
 
