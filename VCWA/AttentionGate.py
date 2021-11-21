@@ -49,14 +49,16 @@ class AttentionGate(keras.layers.Layer):
 
     def compatibility_function(self, local_features, global_features):
         local_component = self.local_Conv1D(local_features)
-        if self.grid_attention:
-            row = int(local_features.shape[1] / global_features.shape[1])
-            col = int(local_features.shape[2] / global_features.shape[2])
-            global_features = tf.keras.layers.UpSampling2D((row, col), interpolation='bilinear')(global_features)
         global_component = self.global_transformation(global_features)
-        # expand g from (batch_size, inter_channels) to (batch_size, local_width, local_height, inter_channels)
-        if not self.grid_attention:
+
+        if self.grid_attention:
+            row = local_features.shape[1] // global_features.shape[1]
+            col = local_features.shape[2] // global_features.shape[2]
+            global_component = tf.keras.layers.UpSampling2D((row, col), interpolation='nearest')(global_component)
+        else:
+            # expand g from (batch_size, inter_channels) to (batch_size, local_width, local_height, inter_channels)
             global_component = tf.expand_dims(tf.expand_dims(global_component, axis=1), axis=1)
+
         compatibility = self.joining_Conv1D(ReLU()(local_component + global_component))
         return compatibility
 
