@@ -185,7 +185,8 @@ def train_optflow_model(video_model,
         # Optflow Model
         optflow_model.fit(
             optflow_train_gen,
-            epochs=1,
+            epochs=i,
+            initial_epoch=i-1,
             validation_data=optflow_test_gen,
             callbacks=[optflow_tensorboard_callback])
 
