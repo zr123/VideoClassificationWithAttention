@@ -4,7 +4,7 @@ from tensorflow.python.keras.models import Model
 from VCWA import ResidualAttentionModule, CBAM
 from VCWA.AttentionModule import AttentionModule
 from VCWA.AttentionGate import AttentionGate
-from TF_modification import mobilenet_v2
+from TF_modification import resatt_mobilenet_v2, mobilenet_v2
 
 
 HEIGHT = 224
@@ -179,14 +179,10 @@ def create_AttentionGatedGrid_MobileNetV2(
 def create_ResidualAttention_MobileNetV2(
         input_shape=(HEIGHT, WIDTH, CHANNELS),
         classes=CLASSES,
-        name='ResAttentionMobileNetV2',
-        p=0,
-        t=2,
-        r=1):
-    model = mobilenet_v2.MobileNetV2(
+        name='ResAttentionMobileNetV2'):
+    model = resatt_mobilenet_v2.MobileNetV2(
         input_shape=input_shape,
         classes=classes,
-        attention_builder_fn=ResidualAttentionModule.create_residual_attention_module,
         weights=None)
     model._name = name
     return model

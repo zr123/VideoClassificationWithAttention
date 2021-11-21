@@ -1,7 +1,7 @@
 import tensorflow as tf
 from tensorflow.keras import layers
 from tensorflow.keras.activations import sigmoid
-from TF_modification.mobilenet_v2 import _inverted_res_block
+from TF_modification.resatt_mobilenet_v2 import _inverted_res_block
 from VCWA import Common
 
 
@@ -65,7 +65,7 @@ def create_mask_branch(x, filters, r, residual_block_fn, shortcuts, name, attent
     # post-block
     for i in range(r):
         x = residual_block_fn(x, filters, name=name + "_mask_postblock" + str(i))
-    x = layers.UpSampling2D()(x)
+    x = layers.UpSampling2D(interpolation="bilinear")(x)
     x = layers.Conv2D(filters, 1)(x)
     x = layers.Conv2D(filters, 1)(x)
     if attention_function == "softmax":
@@ -89,6 +89,6 @@ def create_mask_branch_inner_shortcuts(x, filters, r, residual_block_fn, shortcu
     x = create_mask_branch_inner_shortcuts(x, filters, r, residual_block_fn, shortcuts - 1, name)
     for i in range(r):
         x = residual_block_fn(x, filters, name=name + "_mask_inner" + str(shortcuts) + "_postblock" + str(i))
-    x = layers.UpSampling2D()(x)
+    x = layers.UpSampling2D(interpolation="bilinear")(x)
     x = tf.keras.layers.Add()([x, shortcut])
     return x
