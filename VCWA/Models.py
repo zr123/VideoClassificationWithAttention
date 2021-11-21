@@ -178,7 +178,8 @@ def train_optflow_model(video_model,
         # Video Model
         video_model.fit(
             video_train_gen,
-            epochs=1,
+            epochs=i,
+            initial_epoch=i-1,
             validation_data=video_test_gen,
             callbacks=[vid_tensorboard_callback])
 
@@ -191,7 +192,15 @@ def train_optflow_model(video_model,
             callbacks=[optflow_tensorboard_callback])
 
         twostream = assemble_TwoStreamModel(video_model, optflow_model, classes, fusion="average", recreate_top=True)
-        twostream.evaluate(twostream_test_gen, callbacks=[twostream_tensorboard_callback])
+        # ugly workaround to fix a logging issue
+        twostream.fit(
+            twostream_test_gen,
+            epochs=i,
+            initial_epoch=i-1,
+            validation_split=0.99,
+            callbacks=[twostream_tensorboard_callback]
+        )
+
 
         # save models
         video_model.save(model_basedir + "video/" + video_model.name)
