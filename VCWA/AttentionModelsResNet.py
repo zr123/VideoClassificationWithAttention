@@ -175,7 +175,8 @@ def create_ResidualAttention_ResNet50v2(
             attention_function="sigmoid",
             p=p,
             t=t,
-            r=r)
+            r=r,
+            residual_block_fn=resnet.block2)
         x = resnet.block2(x, filters, stride=stride1, name=name + '_block' + str(blocks))
         return x
 

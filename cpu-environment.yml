@@ -3,11 +3,11 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - python=3.8.*
+  - python
   - notebook
   - jupyter_contrib_nbextensions
   - ipywidgets
-  - numpy=1.19.*
+  - numpy
   - pandas
   - matplotlib
   - opencv
@@ -22,3 +22,4 @@ dependencies:
   - pip
   - pip:
     - tensorflow-addons
+    - keras-flops
