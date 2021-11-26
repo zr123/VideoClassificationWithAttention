@@ -10,7 +10,7 @@ import datetime
 # downscaled defaults for hmdb51
 HEIGHT = 224
 WIDTH = 224
-FRAMES = 40
+FRAMES = 25
 CHANNELS = 3
 CLASSES = 51
 

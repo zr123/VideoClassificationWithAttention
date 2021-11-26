@@ -1,9 +1,7 @@
 import tensorflow as tf
 from tensorflow.python.keras import layers
 from tensorflow.python.keras.models import Model
-from VCWA import ResidualAttentionModule, CBAM
-from VCWA.L2PAModule import L2PAModule
-from VCWA.AttentionGate import AttentionGate
+from VCWA.Attention import CBAM, L2PAModule, AttentionGate
 from TF_modification import resatt_mobilenet_v2, mobilenet_v2
 
 

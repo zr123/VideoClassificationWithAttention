@@ -1,10 +1,8 @@
 import tensorflow as tf
 from tensorflow.python.keras import layers
-from tensorflow.python.keras.models import Model, Sequential
+from tensorflow.python.keras.models import Model
 from tensorflow.python.keras.applications import resnet
-from VCWA import ResidualAttentionModule, CBAM
-from VCWA.L2PAModule import L2PAModule
-from VCWA.AttentionGate import AttentionGate
+from VCWA.Attention import CBAM, ResidualAttentionModule, L2PAModule, AttentionGate
 
 
 HEIGHT = 224

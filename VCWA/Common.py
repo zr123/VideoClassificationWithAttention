@@ -4,7 +4,6 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 import matplotlib.pyplot as plt
-from tensorflow.keras import layers, activations
 from sklearn import preprocessing
 from tensorflow.python.keras.models import Model
 from VCWA import AttentionModels
@@ -17,7 +16,7 @@ from skimage.segmentation import mark_boundaries
 
 def get_dataset(path, split_path, optflow_path=None, split_no=1, dataset_type=None):
     accepted_datasets = ["hmdb51", "ucf101"]
-    assert dataset_type in accepted_datasets, "Unexpected dataset " + dataset_type + " not in " + accepted_datasets
+    assert dataset_type in accepted_datasets, "Unexpected dataset " + dataset_type + " not in " + str(accepted_datasets)
     dataset = evaluate_dataset(path)
     if dataset_type == "hmdb51":
         split_df = get_hmdb51_split(split_path, split_no=split_no)
@@ -292,30 +291,6 @@ def display_lime_batch(model, x, hide_rest=False):
         plt.imshow(mark_boundaries(temp / 2 + 0.5, mask))
         plt.show()
 
-
-###########
-# Helpers #
-###########
-
-
-def softmax2d(x, name):
-    shape = x.shape
-    x = layers.Flatten()(x)
-    x = activations.softmax(x)
-    x = layers.Reshape(shape[1:], name=name)(x)
-    return x
-
-
-# pseudo-softmax: subtract by min value and divide by sum -> less sparse but similar properties as softmax
-def pseudo_softmax2d(x, name):
-    shape = x.shape
-    x = layers.Flatten()(x)
-    # x = (x - min(x)) / sum(x)
-    x = layers.Lambda(
-        lambda l: (l - tf.math.reduce_min(l, axis=-1, keepdims=True)) / tf.math.reduce_sum(l, axis=-1, keepdims=True)
-    )(x)
-    x = layers.Reshape(shape[1:], name=name)(x)
-    return x
 
 ############
 # Grad-CAM #

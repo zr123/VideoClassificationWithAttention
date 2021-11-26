@@ -89,7 +89,7 @@ from tensorflow.python.keras.utils import layer_utils
 from tensorflow.python.lib.io import file_io
 from tensorflow.python.platform import tf_logging as logging
 from tensorflow.python.util.tf_export import keras_export
-from VCWA import ResidualAttentionModule
+from VCWA.Attention import ResidualAttentionModule
 
 BASE_WEIGHT_PATH = ('https://storage.googleapis.com/tensorflow/'
                     'keras-applications/mobilenet_v2/')
@@ -327,7 +327,7 @@ def MobileNetV2(input_shape=None,
   #    x, filters=24, alpha=alpha, stride=1, expansion=6, block_id=2)
 
   # apply residual attention in parallel to the last conv block
-  x = ResidualAttentionModule.create_residual_attention_module(x, 24, p=0, t=1, shortcuts=2, name="attn1")
+  x = ResidualAttentionModule.create_residual_attention_module(x, 24, p=0, t=1, residual_block_fn=residual_block_helper, shortcuts=2, name="attn1")
 
   x = _inverted_res_block(
       x, filters=32, alpha=alpha, stride=2, expansion=6, block_id=3)
@@ -337,7 +337,7 @@ def MobileNetV2(input_shape=None,
   #    x, filters=32, alpha=alpha, stride=1, expansion=6, block_id=5)
 
   # apply residual attention in parallel to the last conv block
-  x = ResidualAttentionModule.create_residual_attention_module(x, 32, p=0, t=1, shortcuts=1, name="attn2")
+  x = ResidualAttentionModule.create_residual_attention_module(x, 32, p=0, t=1, residual_block_fn=residual_block_helper, shortcuts=1, name="attn2")
 
   x = _inverted_res_block(
       x, filters=64, alpha=alpha, stride=2, expansion=6, block_id=6)
@@ -349,7 +349,7 @@ def MobileNetV2(input_shape=None,
   #    x, filters=64, alpha=alpha, stride=1, expansion=6, block_id=9)
 
   # apply residual attention in parallel to the last conv block
-  x = ResidualAttentionModule.create_residual_attention_module(x, 64, p=0, t=1, shortcuts=0, name="attn3")
+  x = ResidualAttentionModule.create_residual_attention_module(x, 64, p=0, t=1, residual_block_fn=residual_block_helper, shortcuts=0, name="attn3")
 
   x = _inverted_res_block(
       x, filters=96, alpha=alpha, stride=1, expansion=6, block_id=10)
@@ -429,6 +429,16 @@ def MobileNetV2(input_shape=None,
     model.load_weights(weights)
 
   return model
+
+
+def residual_block_helper(x, filters, name):
+    return _inverted_res_block(
+        x,
+        filters=filters,
+        alpha=1.0,
+        stride=1,
+        expansion=6,
+        block_id=name)
 
 
 def _inverted_res_block(inputs, expansion, stride, alpha, filters, block_id):
