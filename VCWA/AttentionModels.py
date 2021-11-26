@@ -2,7 +2,7 @@ import tensorflow as tf
 from tensorflow.python.keras import layers
 from tensorflow.python.keras.models import Model
 from VCWA import ResidualAttentionModule, CBAM
-from VCWA.AttentionModule import AttentionModule
+from VCWA.L2PAModule import L2PAModule
 from VCWA.AttentionGate import AttentionGate
 from TF_modification import resatt_mobilenet_v2, mobilenet_v2
 
@@ -53,9 +53,9 @@ def create_L2PA_MobileNetV2(
 
     global_features = layers.GlobalAveragePooling2D()(basenet.output)
 
-    attention1 = AttentionModule()([local1.output, global_features])
-    attention2 = AttentionModule()([local2.output, global_features])
-    attention3 = AttentionModule()([local3.output, global_features])
+    attention1 = L2PAModule()([local1.output, global_features])
+    attention2 = L2PAModule()([local2.output, global_features])
+    attention3 = L2PAModule()([local3.output, global_features])
 
     model_output = tf.keras.layers.Concatenate()([
         layers.Flatten()(attention1),

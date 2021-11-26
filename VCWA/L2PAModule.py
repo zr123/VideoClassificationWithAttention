@@ -4,7 +4,7 @@ import tensorflow.keras.backend as K
 from tensorflow.keras import layers
 
 
-class AttentionModule(keras.layers.Layer):
+class L2PAModule(keras.layers.Layer):
     """Attention module from LEARN TO PAY ATTENTION by Jetley et al.
 
       Arguments:
@@ -13,7 +13,7 @@ class AttentionModule(keras.layers.Layer):
 
     """
     def __init__(self, compatibility_func="weighted"):
-        super(AttentionModule, self).__init__()
+        super(L2PAModule, self).__init__()
         assert compatibility_func in ["weighted", "dot"], "Unexpected compatibility_func argument."
         self.compatibility_func = compatibility_func
 
@@ -41,7 +41,7 @@ class AttentionModule(keras.layers.Layer):
             self.u = self.add_weight(name='u', shape=(local_feature_shape[-1],), initializer="random_normal", trainable=True)
 
     def get_config(self):
-        config = super(AttentionModule, self).get_config()
+        config = super(L2PAModule, self).get_config()
         config.update({
             'compatibility_func':
                 self.compatibility_func

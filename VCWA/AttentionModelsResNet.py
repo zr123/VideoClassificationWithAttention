@@ -3,7 +3,7 @@ from tensorflow.python.keras import layers
 from tensorflow.python.keras.models import Model, Sequential
 from tensorflow.python.keras.applications import resnet
 from VCWA import ResidualAttentionModule, CBAM
-from VCWA.AttentionModule import AttentionModule
+from VCWA.L2PAModule import L2PAModule
 from VCWA.AttentionGate import AttentionGate
 
 
@@ -46,9 +46,9 @@ def create_L2PA_ResNet50v2(
 
     global_features = layers.GlobalAveragePooling2D()(basenet.output)
 
-    attention1 = AttentionModule()([local1.output, global_features])
-    attention2 = AttentionModule()([local2.output, global_features])
-    attention3 = AttentionModule()([local3.output, global_features])
+    attention1 = L2PAModule()([local1.output, global_features])
+    attention2 = L2PAModule()([local2.output, global_features])
+    attention3 = L2PAModule()([local3.output, global_features])
 
     model_output = tf.keras.layers.Concatenate()([
         layers.Flatten()(attention1),
