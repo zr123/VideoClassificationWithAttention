@@ -2,7 +2,6 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras.activations import sigmoid
 from tensorflow.keras.layers import ReLU, Conv1D, Dense
-
 from VCWA.Attention.shared import softmax2d, pseudo_softmax2d
 
 

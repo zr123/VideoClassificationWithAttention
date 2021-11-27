@@ -2,7 +2,7 @@ from pathlib import Path
 import pytest
 import tensorflow as tf
 import numpy as np
-from VCWA import Models
+from VCWA import VideoModels
 from VCWA import AttentionModels
 
 

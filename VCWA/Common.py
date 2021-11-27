@@ -215,6 +215,9 @@ def combine_attention(attention, size=(224, 224)):
 
     combined_attention = cv2.resize(attention[0], dsize=size)
     for i in range(1, len(attention)):
+        # min-max scaling
+        attention[i] = (attention[i] - np.min(attention[i]))/(np.max(attention[i]) - np.min(attention[i]))
+        # combine
         combined_attention += cv2.resize(attention[i], dsize=size)
     combined_attention /= len(attention)
     return combined_attention
@@ -254,15 +257,16 @@ def overlay_attention(image, overlay, rescale_image=True, cmap='inferno'):
     return combined_image
 
 
-def display_attention_batch(model, x, use_attention=False, CAM_layer=None, cmap='inferno'):
+def display_attention_batch(model, x, use_attention=False, CAM_layers=None, cmap='inferno'):
     attention = []
     if use_attention:
         extractor = AttentionModels.get_attention_extractor(model)
         att_list = extractor(x)
         attention = attention + att_list[1:]
-    if CAM_layer is not None:
-        cbam_attention = get_gradcam_attention(x, model, CAM_layer)
-        attention = attention + [cbam_attention]
+    if CAM_layers is not None:
+        for layer in CAM_layers:
+            cbam_attention = get_gradcam_attention(x, model, layer)
+            attention = attention + [cbam_attention]
 
     for i in range(x.shape[0]):
         attention_slice = []
