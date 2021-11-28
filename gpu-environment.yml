@@ -7,10 +7,11 @@ dependencies:
   - notebook
   - jupyter_contrib_nbextensions
   - ipywidgets
-  - numpy=1.19.*
+  - numpy=1.18.5
   - pandas
   - matplotlib
   - opencv
+  - opencv-contrib-python
   - pydot
   - scikit-learn
   - pytest

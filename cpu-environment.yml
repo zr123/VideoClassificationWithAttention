@@ -3,11 +3,11 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - python
+  - python=3.8.*
   - notebook
   - jupyter_contrib_nbextensions
   - ipywidgets
-  - numpy
+  - numpy=1.18.5
   - pandas
   - matplotlib
   - opencv
@@ -17,7 +17,7 @@ dependencies:
   - lime
   - scikit-image
   - google-cloud-storage
-  - tensorflow=2.3.*
+  - tensorflow=2.3.0
   - tensorflow-datasets
   - pip
   - pip:
