@@ -51,9 +51,9 @@ def create_L2PA_MobileNetV2(
 
     global_features = layers.GlobalAveragePooling2D()(basenet.output)
 
-    attention1 = L2PAModule()([local1.output, global_features])
-    attention2 = L2PAModule()([local2.output, global_features])
-    attention3 = L2PAModule()([local3.output, global_features])
+    attention1 = L2PAModule.L2PAModule()([local1.output, global_features])
+    attention2 = L2PAModule.L2PAModule()([local2.output, global_features])
+    attention3 = L2PAModule.L2PAModule()([local3.output, global_features])
 
     model_output = tf.keras.layers.Concatenate()([
         layers.Flatten()(attention1),
@@ -94,9 +94,9 @@ def create_AttentionGated_MobileNetV2(
 
     global_features = layers.GlobalAveragePooling2D()(basenet.output)
 
-    a1 = AttentionGate(internal_dimensions)([local1.output, global_features])
-    a2 = AttentionGate(internal_dimensions)([local2.output, global_features])
-    a3 = AttentionGate(internal_dimensions)([local3.output, global_features])
+    a1 = AttentionGate.AttentionGate(internal_dimensions)([local1.output, global_features])
+    a2 = AttentionGate.AttentionGate(internal_dimensions)([local2.output, global_features])
+    a3 = AttentionGate.AttentionGate(internal_dimensions)([local3.output, global_features])
 
     attended_features1 = layers.Multiply()([local1.output, a1])
     attended_features1 = layers.GlobalAveragePooling2D()(attended_features1)
@@ -147,9 +147,9 @@ def create_AttentionGatedGrid_MobileNetV2(
 
     global_features = basenet.output
 
-    a1 = AttentionGate(internal_dimensions, grid_attention=True)([local1.output, global_features])
-    a2 = AttentionGate(internal_dimensions, grid_attention=True)([local2.output, global_features])
-    a3 = AttentionGate(internal_dimensions, grid_attention=True)([local3.output, global_features])
+    a1 = AttentionGate.AttentionGate(internal_dimensions, grid_attention=True)([local1.output, global_features])
+    a2 = AttentionGate.AttentionGate(internal_dimensions, grid_attention=True)([local2.output, global_features])
+    a3 = AttentionGate.AttentionGate(internal_dimensions, grid_attention=True)([local3.output, global_features])
 
     attended_features1 = layers.Multiply()([local1.output, a1])
     attended_features1 = tf.keras.layers.GlobalAveragePooling2D()(attended_features1)
