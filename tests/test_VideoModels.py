@@ -6,39 +6,6 @@ from VCWA import VideoModels
 from VCWA import AttentionModels
 
 
-################
-# Image Models #
-################
-
-@pytest.mark.parametrize("classes", [10, 100, 1000])
-def test_create_L2PA_MobileNetV2(classes):
-    model = AttentionModels.create_L2PA_MobileNetV2((224, 224, 3), classes=classes)
-    tf.debugging.assert_shapes([(model.output, (None, classes))])
-
-
-@pytest.mark.parametrize("classes", [10, 100, 1000])
-def test_create_AttentionGated_MobileNetV2(classes):
-    model = AttentionModels.create_AttentionGated_MobileNetV2((224, 224, 3), classes=classes)
-    tf.debugging.assert_shapes([(model.output, (None, classes))])
-
-
-@pytest.mark.parametrize("classes", [10, 100, 1000])
-def test_create_AttentionGatedGrid_MobileNetV2(classes):
-    model = AttentionModels.create_AttentionGatedGrid_MobileNetV2((224, 224, 3), classes=classes)
-    tf.debugging.assert_shapes([(model.output, (None, classes))])
-
-
-@pytest.mark.parametrize("classes", [10, 100, 1000])
-def test_create_ResidualAttention_MobileNetV2(classes):
-    model = AttentionModels.create_ResidualAttention_MobileNetV2((224, 224, 3), classes=classes)
-    tf.debugging.assert_shapes([(model.output, (None, classes))])
-
-
-@pytest.mark.parametrize("classes", [10, 100, 1000])
-def test_create_CBAM_ResNet50v2(classes):
-    model = AttentionModels.create_CBAM_MobileNetV2((224, 224, 3), classes=classes)
-    tf.debugging.assert_shapes([(model.output, (None, classes))])
-
 
 ################
 # Video Models #
