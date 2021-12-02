@@ -17,9 +17,10 @@ dependencies:
   - lime
   - scikit-image
   - google-cloud-storage
-  - tensorflow=2.3.0
-  - tensorflow-datasets
   - pip
   - pip:
+    - tensorflow==2.3.0
+    - tensorflow-datasets
     - tensorflow-addons
     - keras-flops
+    - tensorboard-plugin-profile

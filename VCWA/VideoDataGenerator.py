@@ -3,6 +3,8 @@ import numpy as np
 from tensorflow.keras.utils import to_categorical
 from VCWA import Common
 import random
+import VCWA.CompressedNumpy as cnp
+from tqdm import tqdm
 
 
 class VideoDataGenerator(tf.keras.utils.Sequence):
@@ -19,7 +21,7 @@ class VideoDataGenerator(tf.keras.utils.Sequence):
                  shear_range=None,
                  zoom_range=None,
                  horizontal_flip=False):
-        self.dataframe = dataframe[["path", "category"]].copy()
+        self.dataframe = dataframe[["path", "category"]].copy().reset_index()
         self.optflow = optflow
         if optflow:
             self.dataframe["optflow_path"] = dataframe.optflow_path
@@ -72,7 +74,8 @@ class VideoDataGenerator(tf.keras.utils.Sequence):
         return x_batch_vid, np.vstack(y_batch)
 
     def get_x(self, path):
-        x = self.load_and_format_video(path)
+        x = self.load_video(path)
+        x = self.format_video(x)
         if self.single_frame:
             x = self.get_single_frame(x)
         return x
@@ -93,6 +96,7 @@ class VideoDataGenerator(tf.keras.utils.Sequence):
                 break
             x = self.get_x(self.dataframe.optflow_path[i])
             x_batch_optflow.append(x)
+
         if self.shape_format == "video":
             x_batch_optflow = np.array(x_batch_optflow)
         if self.shape_format == "images":
@@ -102,20 +106,34 @@ class VideoDataGenerator(tf.keras.utils.Sequence):
     def __len__(self):
         return self.length
 
-    def load_and_format_video(self, path):
+    # def load_compressed_dataset(self):
+    #     self.data = cnp.Array()
+    #     for i in tqdm(range(self.n)):
+    #         self.data.append(Common.load_video(self.dataframe.path[i]))
+
+    def load_video(self, path):
         file_extension = path.split(".")[-1]
         if file_extension == "npz":
-            npz = np.load(path, allow_pickle=True)
-            vid = npz["arr_0"]
-            npz.close()
+            with np.load(path, allow_pickle=True) as npz:
+                video = npz["arr_0"]
         if file_extension in ["avi", "mp4"]:
-            vid = Common.load_video(path)
+            video = Common.load_video(path)
+        return video
 
-        formatted_vid = []
-        for frame in vid:
+    def format_video(self, video):
+        formatted_video = []
+        for frame in video:
             frame = self.format_frame(frame)
-            formatted_vid.append(frame)
-        return np.array(formatted_vid)
+            formatted_video.append(frame)
+        return np.array(formatted_video)
+
+    def format_frame(self, frame):
+        transform_params = self.get_random_transform_params()
+        frame = self.img_datagen.apply_transform(frame, transform_params)
+        frame = tf.keras.preprocessing.image.smart_resize(frame, self.target_size)
+        if self.preprocessing_function is not None:
+            frame = self.preprocessing_function(frame)
+        return frame
 
     def get_random_transform_params(self):
         theta, shear = 0, 0
@@ -133,11 +151,3 @@ class VideoDataGenerator(tf.keras.utils.Sequence):
                             'zy': zy,
                             'flip_horizontal': flip_horizontal}
         return transform_params
-
-    def format_frame(self, frame):
-        transform_params = self.get_random_transform_params()
-        frame = self.img_datagen.apply_transform(frame, transform_params)
-        frame = tf.keras.preprocessing.image.smart_resize(frame, self.target_size)
-        if self.preprocessing_function is not None:
-            frame = self.preprocessing_function(frame)
-        return frame
