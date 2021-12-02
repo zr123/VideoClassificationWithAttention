@@ -31,10 +31,12 @@ def test_get_hmdb51_split(split_no):
     assert df.size == 13532
 
 
-@pytest.mark.parametrize("split_no, split_size", [(1, 19074), (2, 19172), (3, 19248)])
-def test_get_ucf101_split(split_no, split_size):
+@pytest.mark.parametrize("split_no, train_size, test_size", [(1, 9537, 3783), (2, 9586, 3734), (3, 9624, 3696)])
+def test_get_ucf101_split(split_no, train_size, test_size):
     df = Common.get_ucf101_split("./tests/data/ucfTrainTestlist", split_no=split_no)
-    assert df.size == split_size
+    assert df.split.size == 13_320
+    assert df.split[df.split == 0].size == train_size
+    assert df.split[df.split == 1].size == test_size
 
 
 # test extracting Grad-CAM attention from ResNet50v2

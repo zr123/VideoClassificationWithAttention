@@ -67,13 +67,18 @@ def get_hmdb51_split(path="D:/datasets/hmdb51_org_splits", split_no=1):
 
 
 def get_ucf101_split(path="D:/datasets/ucfTrainTestlist", split_no=1):
-    file = open(path + "/trainlist0" + str(split_no) + ".txt")
     split_df = pd.DataFrame(columns=["filename", "split"])
-    for line in file.readlines():
-        filename, split = line.rstrip().split()
-        _, filename = filename.split("/")
-        split_df = split_df.append({"filename": filename, "split": split}, ignore_index=True)
-    file.close()
+    with open(path + "/trainlist0" + str(split_no) + ".txt") as file:
+        for line in file.readlines():
+            filename, _ = line.rstrip().split()
+            _, filename = filename.split("/")
+            split_df = split_df.append({"filename": filename, "split": 0}, ignore_index=True)
+
+    with open(path + "/testlist0" + str(split_no) + ".txt") as file:
+        for line in file.readlines():
+            _, filename = line.rstrip().split("/")
+            split_df = split_df.append({"filename": filename, "split": 1}, ignore_index=True)
+
     return split_df
 
 

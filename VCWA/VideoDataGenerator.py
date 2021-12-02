@@ -37,6 +37,7 @@ class VideoDataGenerator(tf.keras.utils.Sequence):
         self.shear_range = shear_range
         self.zoom_range = zoom_range
         self.horizontal_flip = horizontal_flip
+        print(f"Found {self.n} videos belonging to {self.num_classes} classes.")
         self.on_epoch_end()
 
     def on_epoch_end(self):
